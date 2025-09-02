@@ -72,13 +72,37 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-2">
+        <Label htmlFor="category" className="text-sm font-medium text-foreground">
+          Kategori <span className="text-red-500">*</span>
+        </Label>
+        <Select
+          value={form.watch("category") || ""}
+          onValueChange={(value) => form.setValue("category", value)}
+        >
+          <SelectTrigger className="h-12 text-base bg-gray-50 border-gray-200" data-testid="select-expense-category">
+            <SelectValue placeholder="Kategori seçin" />
+          </SelectTrigger>
+          <SelectContent>
+            {expenseCategories.map((category) => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {form.formState.errors.category && (
+          <p className="text-sm text-red-600">{form.formState.errors.category.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="description" className="text-sm font-medium text-foreground">
-          Masraf Açıklaması <span className="text-red-500">*</span>
+          Masraf Açıklaması
         </Label>
         <Textarea
           id="description"
           {...form.register("description")}
-          placeholder="Masraf açıklaması girin"
+          placeholder="Masraf açıklaması girin (isteğe bağlı)"
           rows={3}
           className="text-base bg-gray-50 border-gray-200 placeholder:text-gray-400 resize-none"
           data-testid="input-expense-description"
@@ -116,30 +140,6 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
             data-testid="input-expense-date"
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="category" className="text-sm font-medium text-foreground">
-          Kategori <span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={form.watch("category") || ""}
-          onValueChange={(value) => form.setValue("category", value)}
-        >
-          <SelectTrigger className="h-12 text-base bg-gray-50 border-gray-200" data-testid="select-expense-category">
-            <SelectValue placeholder="Kategori seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            {expenseCategories.map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {form.formState.errors.category && (
-          <p className="text-sm text-red-600">{form.formState.errors.category.message}</p>
-        )}
       </div>
 
       <div className="pt-4">
