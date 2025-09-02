@@ -179,36 +179,33 @@ export default function Invoices() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs p-2"
                     onClick={() => setViewingInvoice(invoice)}
                     data-testid={`button-view-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-eye mr-1"></i>
-                    Görüntüle
+                    <i className="fas fa-eye"></i>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs p-2"
                     onClick={() => {
                       setSelectedInvoice(invoice);
                       setIsDialogOpen(true);
                     }}
                     data-testid={`button-edit-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-edit mr-1"></i>
-                    Düzenle
+                    <i className="fas fa-edit"></i>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs"
+                    className="text-xs p-2"
                     onClick={() => deleteMutation.mutate(invoice.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-trash text-red-500 mr-1"></i>
-                    Sil
+                    <i className="fas fa-trash text-red-500"></i>
                   </Button>
                 </div>
                 {(invoice.status === "unpaid" || invoice.status === "partial") && (
