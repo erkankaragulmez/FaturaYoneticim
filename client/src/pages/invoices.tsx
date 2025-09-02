@@ -179,33 +179,33 @@ export default function Invoices() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
                     onClick={() => setViewingInvoice(invoice)}
                     data-testid={`button-view-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-eye text-lg"></i>
+                    ◉
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
                     onClick={() => {
                       setSelectedInvoice(invoice);
                       setIsDialogOpen(true);
                     }}
                     data-testid={`button-edit-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-edit text-lg"></i>
+                    ✎
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-500 hover:text-red-600"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
                     onClick={() => deleteMutation.mutate(invoice.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-trash text-lg"></i>
+                    ✕
                   </Button>
                 </div>
                 {(invoice.status === "unpaid" || invoice.status === "partial") && (

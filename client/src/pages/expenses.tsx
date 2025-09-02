@@ -196,24 +196,24 @@ export default function Expenses() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
+                        className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
                         onClick={() => {
                           setSelectedExpense(expense);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-edit-expense-${expense.id}`}
                       >
-                        <i className="fas fa-edit text-lg"></i>
+                        ✎
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-red-600"
+                        className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
                         onClick={() => deleteMutation.mutate(expense.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-expense-${expense.id}`}
                       >
-                        <i className="fas fa-trash text-lg"></i>
+                        ✕
                       </Button>
                     </div>
                   </div>
