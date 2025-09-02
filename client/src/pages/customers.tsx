@@ -156,7 +156,7 @@ export default function Customers() {
                         }}
                         data-testid={`button-view-customer-${customer.id}`}
                       >
-                        <i className="fas fa-eye"></i>
+                        <i className="fas fa-eye text-blue-600"></i>
                       </Button>
                       <Button
                         variant="outline"
@@ -168,7 +168,7 @@ export default function Customers() {
                         }}
                         data-testid={`button-edit-customer-${customer.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <i className="fas fa-edit text-gray-700"></i>
                       </Button>
                       <Button
                         variant="outline"
@@ -178,7 +178,7 @@ export default function Customers() {
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-customer-${customer.id}`}
                       >
-                        <i className="fas fa-trash text-red-500"></i>
+                        <i className="fas fa-trash text-red-600"></i>
                       </Button>
                     </div>
                   </div>

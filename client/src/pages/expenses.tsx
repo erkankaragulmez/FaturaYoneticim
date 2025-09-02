@@ -203,7 +203,7 @@ export default function Expenses() {
                         }}
                         data-testid={`button-edit-expense-${expense.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <i className="fas fa-edit text-gray-700"></i>
                       </Button>
                       <Button
                         variant="outline"
@@ -213,7 +213,7 @@ export default function Expenses() {
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-expense-${expense.id}`}
                       >
-                        <i className="fas fa-trash text-red-500"></i>
+                        <i className="fas fa-trash text-red-600"></i>
                       </Button>
                     </div>
                   </div>

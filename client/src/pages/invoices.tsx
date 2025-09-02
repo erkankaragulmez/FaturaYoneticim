@@ -183,7 +183,7 @@ export default function Invoices() {
                     onClick={() => setViewingInvoice(invoice)}
                     data-testid={`button-view-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-eye"></i>
+                    <i className="fas fa-eye text-blue-600"></i>
                   </Button>
                   <Button
                     variant="outline"
@@ -195,7 +195,7 @@ export default function Invoices() {
                     }}
                     data-testid={`button-edit-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-edit"></i>
+                    <i className="fas fa-edit text-gray-700"></i>
                   </Button>
                   <Button
                     variant="outline"
@@ -205,7 +205,7 @@ export default function Invoices() {
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-trash text-red-500"></i>
+                    <i className="fas fa-trash text-red-600"></i>
                   </Button>
                 </div>
                 {(invoice.status === "unpaid" || invoice.status === "partial") && (
