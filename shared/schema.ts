@@ -54,6 +54,8 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 }).extend({
   amount: z.string().min(1, "Tutar gereklidir"),
   paidAmount: z.string().optional(),
+  issueDate: z.string().optional(),
+  dueDate: z.string().optional(),
 });
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({
@@ -61,6 +63,7 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
   createdAt: true,
 }).extend({
   amount: z.string().min(1, "Tutar gereklidir"),
+  date: z.string().optional(),
 });
 
 export const insertPaymentSchema = createInsertSchema(payments).omit({
@@ -68,6 +71,7 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 }).extend({
   amount: z.string().min(1, "Tutar gereklidir"),
+  date: z.string().optional(),
 });
 
 export type Customer = typeof customers.$inferSelect;
