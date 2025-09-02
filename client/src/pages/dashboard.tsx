@@ -2,12 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import ProfitLossModal from "@/components/modals/profit-loss-modal";
 import { formatCurrency } from "@/lib/currency";
 
 export default function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
-  const [showProfitModal, setShowProfitModal] = useState<"monthly" | "yearly" | null>(null);
+  const [showProfitSection, setShowProfitSection] = useState<"monthly" | "yearly" | null>(null);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
@@ -68,8 +67,8 @@ export default function Dashboard() {
             </SelectContent>
           </Select>
           <Button 
-            variant="outline" 
             size="icon"
+            className="bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm"
             onClick={() => {
               const currentIndex = periodOptions.findIndex(p => p.value === selectedPeriod);
               if (currentIndex < periodOptions.length - 1) {
@@ -78,11 +77,11 @@ export default function Dashboard() {
             }}
             data-testid="button-previous-month"
           >
-            <i className="fas fa-chevron-left text-muted-foreground"></i>
+            <i className="fas fa-chevron-left text-gray-700"></i>
           </Button>
           <Button 
-            variant="outline" 
             size="icon"
+            className="bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm"
             onClick={() => {
               const currentIndex = periodOptions.findIndex(p => p.value === selectedPeriod);
               if (currentIndex > 0) {
@@ -91,7 +90,7 @@ export default function Dashboard() {
             }}
             data-testid="button-next-month"
           >
-            <i className="fas fa-chevron-right text-muted-foreground"></i>
+            <i className="fas fa-chevron-right text-gray-700"></i>
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
@@ -142,7 +141,7 @@ export default function Dashboard() {
       <div className="p-4 space-y-3">
         <Button 
           className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-medium"
-          onClick={() => setShowProfitModal("monthly")}
+          onClick={() => setShowProfitSection(showProfitSection === "monthly" ? null : "monthly")}
           data-testid="button-monthly-profit"
         >
           <i className="fas fa-calculator mr-2"></i>
@@ -150,7 +149,7 @@ export default function Dashboard() {
         </Button>
         <Button 
           className="w-full bg-secondary text-secondary-foreground py-3 rounded-xl font-medium"
-          onClick={() => setShowProfitModal("yearly")}
+          onClick={() => setShowProfitSection(showProfitSection === "yearly" ? null : "yearly")}
           data-testid="button-yearly-profit"
         >
           <i className="fas fa-chart-bar mr-2"></i>
@@ -158,13 +157,54 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Profit/Loss Modal */}
-      <ProfitLossModal
-        type={showProfitModal}
-        data={analytics}
-        selectedPeriod={selectedPeriod}
-        onClose={() => setShowProfitModal(null)}
-      />
+      {/* Profit/Loss Section */}
+      {showProfitSection && analytics && (
+        <div className="p-4 border-t border-border">
+          <div className="bg-white border border-border rounded-xl p-6 text-center">
+            <h3 className="text-lg font-semibold mb-4" data-testid="text-profit-title">
+              {showProfitSection === "monthly" ? "Aylık Kar/Zarar" : "Yıllık Kar/Zarar"}
+            </h3>
+            
+            {(() => {
+              const isMonthly = showProfitSection === "monthly";
+              const profit = isMonthly ? analytics.monthly?.profit || 0 : analytics.yearly?.profit || 0;
+              const invoiceTotal = isMonthly ? analytics.monthly?.invoices || 0 : analytics.yearly?.invoices || 0;
+              const expenseTotal = isMonthly ? analytics.monthly?.expenses || 0 : analytics.yearly?.expenses || 0;
+              const isProfit = profit >= 0;
+              
+              // Get period label
+              const monthNames = [
+                "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+                "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+              ];
+              const [year, monthNum] = selectedPeriod.split("-");
+              const monthName = monthNames[parseInt(monthNum) - 1];
+              const period = isMonthly ? `${monthName} ${year}` : year;
+              
+              return (
+                <>
+                  <div className={`text-3xl font-bold mb-4 ${
+                    isProfit ? 'text-green-600' : 'text-red-600'
+                  }`} data-testid="text-profit-amount">
+                    {formatCurrency(profit)}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4" data-testid="text-profit-calculation">
+                    {period}: {formatCurrency(invoiceTotal)} (Faturalar) - {formatCurrency(expenseTotal)} (Masraflar)
+                  </p>
+                  <Button 
+                    onClick={() => setShowProfitSection(null)}
+                    variant="outline"
+                    className="w-full"
+                    data-testid="button-close-profit"
+                  >
+                    Kapat
+                  </Button>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
