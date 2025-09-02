@@ -10,6 +10,7 @@ export default function BottomNavigation({ currentPath }: BottomNavigationProps)
     { path: "/customers", icon: "fas fa-users", label: "Müşteriler" },
     { path: "/invoices", icon: "fas fa-file-invoice", label: "Faturalar" },
     { path: "/expenses", icon: "fas fa-credit-card", label: "Masraflar" },
+    { path: "/reports", icon: "fas fa-chart-bar", label: "Raporlar" },
   ];
 
   return (
