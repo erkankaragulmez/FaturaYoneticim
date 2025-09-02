@@ -25,7 +25,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       number: invoice?.number || "",
       customerId: invoice?.customerId || "",
       amount: invoice?.amount || "",
-      paidAmount: invoice?.paidAmount || "0",
+      paidAmount: "0",
       status: invoice?.status || "unpaid",
       description: invoice?.description || "",
       issueDate: invoice?.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -110,18 +110,6 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
         {form.formState.errors.amount && (
           <p className="text-sm text-red-600">{form.formState.errors.amount.message}</p>
         )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="paidAmount">Ödenen Tutar (₺)</Label>
-        <Input
-          id="paidAmount"
-          {...form.register("paidAmount")}
-          placeholder="0.00"
-          type="number"
-          step="0.01"
-          data-testid="input-invoice-paid-amount"
-        />
       </div>
 
       <div className="space-y-2">

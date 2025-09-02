@@ -273,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const monthlyExpenseTotal = monthlyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
       const monthlyPaymentTotal = monthlyPayments.reduce((sum, pay) => sum + parseFloat(pay.amount), 0);
       
-      // Receivables (unpaid + partial invoices)
+      // Receivables (all unpaid invoice amounts - including remaining amounts from partial invoices)
       const receivables = invoices.filter(inv => inv.status === "unpaid" || inv.status === "partial");
       const totalReceivables = receivables.reduce((sum, inv) => {
         const remaining = parseFloat(inv.amount) - parseFloat(inv.paidAmount || "0");
