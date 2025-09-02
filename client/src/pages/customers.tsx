@@ -145,26 +145,43 @@ export default function Customers() {
                       {formatCurrency(balance)}
                     </div>
                     <p className="text-xs text-muted-foreground">Bakiye</p>
-                    <div className="flex space-x-1 mt-2">
+                    <div className="grid grid-cols-3 gap-1 mt-2">
                       <Button
                         variant="outline"
                         size="sm"
+                        className="text-xs"
+                        onClick={() => {
+                          setSelectedCustomer(customer);
+                          setIsDialogOpen(true);
+                        }}
+                        data-testid={`button-view-customer-${customer.id}`}
+                      >
+                        <i className="fas fa-eye mr-1"></i>
+                        Görüntüle
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-edit-customer-${customer.id}`}
                       >
-                        <i className="fas fa-edit"></i>
+                        <i className="fas fa-edit mr-1"></i>
+                        Düzenle
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
+                        className="text-xs"
                         onClick={() => deleteMutation.mutate(customer.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-customer-${customer.id}`}
                       >
-                        <i className="fas fa-trash text-red-500"></i>
+                        <i className="fas fa-trash text-red-500 mr-1"></i>
+                        Sil
                       </Button>
                     </div>
                   </div>

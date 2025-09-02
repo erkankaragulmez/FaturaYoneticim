@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Invoice, Customer } from "@shared/schema";
 import InvoiceForm from "@/components/forms/invoice-form";
+import InvoiceDetailModal from "@/components/modals/invoice-detail-modal";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date-utils";
 import { queryClient } from "@/lib/queryClient";
@@ -14,6 +15,7 @@ export default function Invoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
@@ -27,6 +29,11 @@ export default function Invoices() {
     if (!customerId) return "Müşteri Seçilmemiş";
     const customer = customers.find(c => c.id === customerId);
     return customer?.name || "Bilinmeyen Müşteri";
+  };
+
+  const getCustomer = (customerId: string | null) => {
+    if (!customerId) return null;
+    return customers.find(c => c.id === customerId) || null;
   };
 
   const getStatusBadge = (status: string) => {
@@ -153,6 +160,15 @@ export default function Invoices() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setViewingInvoice(invoice)}
+                  data-testid={`button-view-invoice-${invoice.id}`}
+                >
+                  <i className="fas fa-eye mr-1"></i>
+                  Görüntüle
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     setSelectedInvoice(invoice);
                     setIsDialogOpen(true);
@@ -177,6 +193,20 @@ export default function Invoices() {
           ))
         )}
       </div>
+
+      {/* Invoice Detail Modal */}
+      {viewingInvoice && (
+        <InvoiceDetailModal
+          invoice={viewingInvoice}
+          customer={getCustomer(viewingInvoice.customerId)}
+          onClose={() => setViewingInvoice(null)}
+          onEdit={() => {
+            setSelectedInvoice(viewingInvoice);
+            setViewingInvoice(null);
+            setIsDialogOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

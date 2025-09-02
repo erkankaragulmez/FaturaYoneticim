@@ -91,11 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", async (req, res) => {
     try {
       const validatedData = insertInvoiceSchema.parse(req.body);
-      const invoice = await storage.createInvoice({
-        ...validatedData,
-        issueDate: validatedData.issueDate ? new Date(validatedData.issueDate) : new Date(),
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
-      });
+      const invoice = await storage.createInvoice(validatedData);
       res.status(201).json(invoice);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -108,12 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/invoices/:id", async (req, res) => {
     try {
       const validatedData = insertInvoiceSchema.partial().parse(req.body);
-      const updateData = {
-        ...validatedData,
-        issueDate: validatedData.issueDate ? new Date(validatedData.issueDate) : undefined,
-        dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : undefined,
-      };
-      const invoice = await storage.updateInvoice(req.params.id, updateData);
+      const invoice = await storage.updateInvoice(req.params.id, validatedData);
       res.json(invoice);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -160,10 +151,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/expenses", async (req, res) => {
     try {
       const validatedData = insertExpenseSchema.parse(req.body);
-      const expense = await storage.createExpense({
-        ...validatedData,
-        date: validatedData.date ? new Date(validatedData.date) : new Date(),
-      });
+      const expense = await storage.createExpense(validatedData);
       res.status(201).json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -176,11 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/expenses/:id", async (req, res) => {
     try {
       const validatedData = insertExpenseSchema.partial().parse(req.body);
-      const updateData = {
-        ...validatedData,
-        date: validatedData.date ? new Date(validatedData.date) : undefined,
-      };
-      const expense = await storage.updateExpense(req.params.id, updateData);
+      const expense = await storage.updateExpense(req.params.id, validatedData);
       res.json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -224,10 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/payments", async (req, res) => {
     try {
       const validatedData = insertPaymentSchema.parse(req.body);
-      const payment = await storage.createPayment({
-        ...validatedData,
-        date: validatedData.date ? new Date(validatedData.date) : new Date(),
-      });
+      const payment = await storage.createPayment(validatedData);
       
       // Update invoice status based on payments
       if (payment.invoiceId) {

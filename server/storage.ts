@@ -127,7 +127,8 @@ export class MemStorage implements IStorage {
       id,
       amount: insertInvoice.amount,
       paidAmount: insertInvoice.paidAmount || "0",
-      issueDate: insertInvoice.issueDate || new Date(),
+      issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
+      dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
       createdAt: new Date()
     };
     this.invoices.set(id, invoice);
@@ -138,7 +139,12 @@ export class MemStorage implements IStorage {
     const invoice = this.invoices.get(id);
     if (!invoice) throw new Error("Invoice not found");
     
-    const updated = { ...invoice, ...updateData };
+    const updated = { 
+      ...invoice, 
+      ...updateData,
+      issueDate: updateData.issueDate ? new Date(updateData.issueDate) : invoice.issueDate,
+      dueDate: updateData.dueDate ? new Date(updateData.dueDate) : invoice.dueDate,
+    };
     this.invoices.set(id, updated);
     return updated;
   }
@@ -163,7 +169,7 @@ export class MemStorage implements IStorage {
     const expense: Expense = { 
       ...insertExpense,
       id,
-      date: insertExpense.date || new Date(),
+      date: insertExpense.date ? new Date(insertExpense.date) : new Date(),
       createdAt: new Date()
     };
     this.expenses.set(id, expense);
@@ -174,7 +180,11 @@ export class MemStorage implements IStorage {
     const expense = this.expenses.get(id);
     if (!expense) throw new Error("Expense not found");
     
-    const updated = { ...expense, ...updateData };
+    const updated = { 
+      ...expense, 
+      ...updateData,
+      date: updateData.date ? new Date(updateData.date) : expense.date,
+    };
     this.expenses.set(id, updated);
     return updated;
   }
@@ -201,7 +211,7 @@ export class MemStorage implements IStorage {
     const payment: Payment = { 
       ...insertPayment,
       id,
-      date: insertPayment.date || new Date(),
+      date: insertPayment.date ? new Date(insertPayment.date) : new Date(),
       createdAt: new Date()
     };
     this.payments.set(id, payment);

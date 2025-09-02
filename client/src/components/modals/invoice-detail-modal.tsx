@@ -1,0 +1,170 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { type Invoice, type Customer, type Payment } from "@shared/schema";
+import PaymentForm from "@/components/forms/payment-form";
+import { formatCurrency } from "@/lib/currency";
+import { formatDate } from "@/lib/date-utils";
+
+interface InvoiceDetailModalProps {
+  invoice: Invoice | null;
+  customer: Customer | null;
+  onClose: () => void;
+  onEdit: () => void;
+}
+
+export default function InvoiceDetailModal({ 
+  invoice, 
+  customer, 
+  onClose, 
+  onEdit 
+}: InvoiceDetailModalProps) {
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+
+  const { data: payments = [] } = useQuery<Payment[]>({
+    queryKey: ["/api/payments/invoice", invoice?.id],
+    enabled: !!invoice?.id,
+  });
+
+  if (!invoice) return null;
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      paid: { label: "Ödendi", className: "bg-green-100 text-green-700" },
+      partial: { label: "Kısmi", className: "bg-orange-100 text-orange-700" },
+      unpaid: { label: "Ödenmemiş", className: "bg-red-100 text-red-700" },
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.unpaid;
+    return <Badge className={config.className}>{config.label}</Badge>;
+  };
+
+  const remainingAmount = parseFloat(invoice.amount) - parseFloat(invoice.paidAmount || "0");
+  const canAddPayment = remainingAmount > 0;
+
+  if (showPaymentForm) {
+    return (
+      <Dialog open={true} onOpenChange={() => setShowPaymentForm(false)}>
+        <DialogContent className="w-full max-w-md">
+          <DialogHeader>
+            <DialogTitle>Ödeme Ekle</DialogTitle>
+          </DialogHeader>
+          <PaymentForm 
+            invoice={invoice} 
+            onSuccess={() => {
+              setShowPaymentForm(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Fatura Detayı</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onEdit}
+              data-testid="button-edit-invoice-detail"
+            >
+              <i className="fas fa-edit"></i>
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Invoice Info */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-medium text-foreground">{invoice.number}</h3>
+              {getStatusBadge(invoice.status || "unpaid")}
+            </div>
+            <div className="space-y-1 text-sm text-muted-foreground">
+              <div>Müşteri: {customer?.name || "Bilinmeyen"}</div>
+              {customer?.company && <div>Şirket: {customer.company}</div>}
+              <div>Fatura Tarihi: {formatDate(invoice.issueDate!)}</div>
+              {invoice.dueDate && <div>Vade Tarihi: {formatDate(invoice.dueDate)}</div>}
+              {invoice.description && <div>Açıklama: {invoice.description}</div>}
+            </div>
+          </div>
+
+          {/* Amount Info */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Toplam Tutar:</span>
+                <span className="font-medium">{formatCurrency(parseFloat(invoice.amount))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Ödenen:</span>
+                <span className="font-medium text-green-600">
+                  {formatCurrency(parseFloat(invoice.paidAmount || "0"))}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Kalan:</span>
+                <span className={`font-bold ${remainingAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                  {formatCurrency(remainingAmount)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment History */}
+          {payments.length > 0 && (
+            <div>
+              <h3 className="font-medium text-foreground mb-3">Ödeme Geçmişi</h3>
+              <div className="space-y-2">
+                {payments.map((payment) => (
+                  <div key={payment.id} className="bg-green-50 p-3 rounded-lg border border-green-200">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-green-700">
+                          {formatCurrency(parseFloat(payment.amount))}
+                        </div>
+                        <div className="text-xs text-green-600">
+                          {formatDate(payment.date!)}
+                        </div>
+                      </div>
+                      <i className="fas fa-check-circle text-green-500"></i>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="space-y-2 pt-4">
+            {canAddPayment && (
+              <Button
+                onClick={() => setShowPaymentForm(true)}
+                className="w-full bg-secondary text-secondary-foreground"
+                data-testid="button-add-payment"
+              >
+                <i className="fas fa-plus mr-2"></i>
+                Ödeme Ekle
+              </Button>
+            )}
+            <Button
+              onClick={onClose}
+              variant="outline"
+              className="w-full"
+              data-testid="button-close-invoice-detail"
+            >
+              Kapat
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
