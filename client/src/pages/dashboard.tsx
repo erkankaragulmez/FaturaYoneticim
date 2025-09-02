@@ -162,6 +162,7 @@ export default function Dashboard() {
       <ProfitLossModal
         type={showProfitModal}
         data={analytics}
+        selectedPeriod={selectedPeriod}
         onClose={() => setShowProfitModal(null)}
       />
     </div>

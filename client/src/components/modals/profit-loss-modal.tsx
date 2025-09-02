@@ -5,10 +5,11 @@ import { formatCurrency } from "@/lib/currency";
 interface ProfitLossModalProps {
   type: "monthly" | "yearly" | null;
   data: any;
+  selectedPeriod?: string;
   onClose: () => void;
 }
 
-export default function ProfitLossModal({ type, data, onClose }: ProfitLossModalProps) {
+export default function ProfitLossModal({ type, data, selectedPeriod = "2025-09", onClose }: ProfitLossModalProps) {
   if (!type || !data) return null;
 
   const isMonthly = type === "monthly";
@@ -18,7 +19,16 @@ export default function ProfitLossModal({ type, data, onClose }: ProfitLossModal
 
   const isProfit = profit >= 0;
   const title = isMonthly ? "Aylık Kar/Zarar" : "Yıllık Kar/Zarar";
-  const period = isMonthly ? "Eylül 2025" : "2025";
+  
+  // Get period label based on selectedPeriod
+  const monthNames = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+  ];
+  
+  const [year, monthNum] = selectedPeriod.split("-");
+  const monthName = monthNames[parseInt(monthNum) - 1];
+  const period = isMonthly ? `${monthName} ${year}` : year;
 
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
