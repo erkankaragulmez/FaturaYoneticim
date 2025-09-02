@@ -177,35 +177,32 @@ export default function Invoices() {
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <div className="flex space-x-1">
                   <Button
-                    variant="ghost"
                     size="sm"
-                    className="text-xs p-2 hover:bg-blue-50"
+                    className="bg-blue-500 hover:bg-blue-600 text-white p-2 min-w-8 h-8"
                     onClick={() => setViewingInvoice(invoice)}
                     data-testid={`button-view-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-eye text-blue-600 text-base"></i>
+                    👁️
                   </Button>
                   <Button
-                    variant="ghost"
                     size="sm"
-                    className="text-xs p-2 hover:bg-gray-50"
+                    className="bg-gray-500 hover:bg-gray-600 text-white p-2 min-w-8 h-8"
                     onClick={() => {
                       setSelectedInvoice(invoice);
                       setIsDialogOpen(true);
                     }}
                     data-testid={`button-edit-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-edit text-gray-700 text-base"></i>
+                    ✏️
                   </Button>
                   <Button
-                    variant="ghost"
                     size="sm"
-                    className="text-xs p-2 hover:bg-red-50"
+                    className="bg-red-500 hover:bg-red-600 text-white p-2 min-w-8 h-8"
                     onClick={() => deleteMutation.mutate(invoice.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}
                   >
-                    <i className="fas fa-trash text-red-600 text-base"></i>
+                    🗑️
                   </Button>
                 </div>
                 {(invoice.status === "unpaid" || invoice.status === "partial") && (
