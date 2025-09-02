@@ -38,13 +38,20 @@ export default function Reports() {
     const overdue20plus: any[] = [];
 
     invoices.forEach((invoice: any) => {
+      // Skip paid invoices
       if (invoice.status === "paid") return;
       
       const dueDate = new Date(invoice.dueDate);
       const daysDiff = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
       
+      // Only include overdue invoices (past due date)
+      if (daysDiff <= 0) return;
+      
       const customer = customers.find((c: any) => c.id === invoice.customerId);
       const remaining = parseFloat(invoice.amount) - parseFloat(invoice.paidAmount || "0");
+      
+      // Skip if fully paid
+      if (remaining <= 0) return;
       
       const invoiceData = {
         ...invoice,
@@ -54,6 +61,7 @@ export default function Reports() {
         daysPastDue: daysDiff
       };
 
+      // Categorize by overdue period
       if (daysDiff >= 10 && daysDiff <= 20) {
         overdue10to20.push(invoiceData);
       } else if (daysDiff > 20) {
