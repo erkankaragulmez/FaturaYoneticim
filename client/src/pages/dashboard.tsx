@@ -14,6 +14,13 @@ export default function Dashboard() {
 
   const { data: analytics, isLoading } = useQuery({
     queryKey: ["/api/analytics/dashboard", { month: currentMonth, year: currentYear }],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/dashboard?month=${currentMonth}&year=${currentYear}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics');
+      }
+      return response.json();
+    },
   });
 
   const periodOptions = [
