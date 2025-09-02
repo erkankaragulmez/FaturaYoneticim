@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Invoice, Customer } from "@shared/schema";
@@ -16,6 +17,7 @@ export default function Invoices() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
@@ -47,9 +49,24 @@ export default function Invoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
-    if (activeTab === "all") return true;
-    return invoice.status === activeTab;
+    // First filter by tab
+    let passesTabFilter = true;
+    if (activeTab === "all") passesTabFilter = true;
+    else passesTabFilter = invoice.status === activeTab;
+    
+    // Then filter by status dropdown
+    let passesStatusFilter = true;
+    if (statusFilter === "all") passesStatusFilter = true;
+    else passesStatusFilter = invoice.status === statusFilter;
+    
+    return passesTabFilter && passesStatusFilter;
   });
+
+  const getRemainingBalance = (invoice: Invoice) => {
+    const total = parseFloat(invoice.amount);
+    const paid = parseFloat(invoice.paidAmount || "0");
+    return total - paid;
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -125,6 +142,21 @@ export default function Invoices() {
         </TabsList>
       </Tabs>
 
+      {/* Status Filter Dropdown */}
+      <div className="mb-4">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-48" data-testid="select-status-filter">
+            <SelectValue placeholder="Durum Filtresi" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tüm Durumlar</SelectItem>
+            <SelectItem value="unpaid">Ödenmemiş</SelectItem>
+            <SelectItem value="partial">Kısmi Ödenenler</SelectItem>
+            <SelectItem value="paid">Ödenenler</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Invoice List */}
       <div className="space-y-3">
         {filteredInvoices.length === 0 ? (
@@ -144,8 +176,15 @@ export default function Invoices() {
                   </span>
                   {getStatusBadge(invoice.status || "unpaid")}
                 </div>
-                <div className="text-sm font-medium text-foreground" data-testid={`text-invoice-amount-${invoice.id}`}>
-                  {formatCurrency(parseFloat(invoice.amount))}
+                <div className="text-right">
+                  <div className="text-sm font-medium text-foreground" data-testid={`text-invoice-amount-${invoice.id}`}>
+                    {formatCurrency(parseFloat(invoice.amount))}
+                  </div>
+                  {invoice.status === "partial" && (
+                    <div className="text-xs text-orange-600 font-medium" data-testid={`text-remaining-balance-${invoice.id}`}>
+                      Kalan: {formatCurrency(getRemainingBalance(invoice))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center justify-between text-sm text-muted-foreground">
