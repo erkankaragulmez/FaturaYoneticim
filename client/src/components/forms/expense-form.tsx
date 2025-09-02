@@ -70,14 +70,63 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
       <div className="space-y-2">
-        <Label htmlFor="category">Kategori *</Label>
+        <Label htmlFor="description" className="text-sm font-medium text-foreground">
+          Masraf Açıklaması <span className="text-red-500">*</span>
+        </Label>
+        <Textarea
+          id="description"
+          {...form.register("description")}
+          placeholder="Masraf açıklaması girin"
+          rows={3}
+          className="text-base bg-gray-50 border-gray-200 placeholder:text-gray-400 resize-none"
+          data-testid="input-expense-description"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="amount" className="text-sm font-medium text-foreground">
+          Tutar <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="amount"
+          {...form.register("amount")}
+          placeholder="0.00"
+          type="number"
+          step="0.01"
+          className="h-12 text-base bg-gray-50 border-gray-200 placeholder:text-gray-400"
+          data-testid="input-expense-amount"
+        />
+        {form.formState.errors.amount && (
+          <p className="text-sm text-red-600">{form.formState.errors.amount.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="date" className="text-sm font-medium text-foreground">
+          Tarih <span className="text-red-500">*</span>
+        </Label>
+        <div className="relative">
+          <Input
+            id="date"
+            type="date"
+            {...form.register("date")}
+            className="h-12 text-base bg-gray-50 border-gray-200"
+            data-testid="input-expense-date"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="category" className="text-sm font-medium text-foreground">
+          Kategori <span className="text-red-500">*</span>
+        </Label>
         <Select
           value={form.watch("category") || ""}
           onValueChange={(value) => form.setValue("category", value)}
         >
-          <SelectTrigger data-testid="select-expense-category">
+          <SelectTrigger className="h-12 text-base bg-gray-50 border-gray-200" data-testid="select-expense-category">
             <SelectValue placeholder="Kategori seçin" />
           </SelectTrigger>
           <SelectContent>
@@ -93,50 +142,22 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="amount">Tutar (₺) *</Label>
-        <Input
-          id="amount"
-          {...form.register("amount")}
-          placeholder="0.00"
-          type="number"
-          step="0.01"
-          data-testid="input-expense-amount"
-        />
-        {form.formState.errors.amount && (
-          <p className="text-sm text-red-600">{form.formState.errors.amount.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="date">Tarih</Label>
-        <Input
-          id="date"
-          type="date"
-          {...form.register("date")}
-          data-testid="input-expense-date"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Açıklama</Label>
-        <Textarea
-          id="description"
-          {...form.register("description")}
-          placeholder="Masraf açıklaması"
-          rows={3}
-          data-testid="input-expense-description"
-        />
-      </div>
-
-      <div className="flex space-x-2 pt-4">
+      <div className="pt-4">
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full h-12 text-base text-gray-500 bg-transparent border-0 mb-4"
+        >
+          İptal
+        </Button>
         <Button
           type="submit"
           disabled={mutation.isPending}
-          className="flex-1"
+          className="w-full h-12 text-base bg-primary hover:bg-primary/90 text-white rounded-lg font-medium"
           data-testid="button-save-expense"
         >
-          {mutation.isPending ? "Kaydediliyor..." : expense ? "Güncelle" : "Kaydet"}
+          <i className="fas fa-receipt mr-2"></i>
+          {mutation.isPending ? "Kaydediliyor..." : "Kaydet"}
         </Button>
       </div>
     </form>
