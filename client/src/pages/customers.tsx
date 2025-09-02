@@ -147,38 +147,38 @@ export default function Customers() {
                     <p className="text-xs text-muted-foreground">Bakiye</p>
                     <div className="grid grid-cols-3 gap-1 mt-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-xs p-2"
+                        className="text-xs p-2 hover:bg-blue-50"
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-view-customer-${customer.id}`}
                       >
-                        <i className="fas fa-eye text-blue-600"></i>
+                        <i className="fas fa-eye text-blue-600 text-base"></i>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-xs p-2"
+                        className="text-xs p-2 hover:bg-gray-50"
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-edit-customer-${customer.id}`}
                       >
-                        <i className="fas fa-edit text-gray-700"></i>
+                        <i className="fas fa-edit text-gray-700 text-base"></i>
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-xs p-2"
+                        className="text-xs p-2 hover:bg-red-50"
                         onClick={() => deleteMutation.mutate(customer.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-customer-${customer.id}`}
                       >
-                        <i className="fas fa-trash text-red-600"></i>
+                        <i className="fas fa-trash text-red-600 text-base"></i>
                       </Button>
                     </div>
                   </div>
