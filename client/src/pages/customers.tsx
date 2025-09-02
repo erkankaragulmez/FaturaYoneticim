@@ -147,35 +147,38 @@ export default function Customers() {
                     <p className="text-xs text-muted-foreground">Bakiye</p>
                     <div className="grid grid-cols-3 gap-1 mt-2">
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-blue-500 hover:bg-blue-600 text-white p-2 min-w-8 h-8"
+                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-view-customer-${customer.id}`}
                       >
-                        👁️
+                        <i className="fas fa-eye text-lg"></i>
                       </Button>
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 min-w-8 h-8"
+                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
                         onClick={() => {
                           setSelectedCustomer(customer);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-edit-customer-${customer.id}`}
                       >
-                        ✏️
+                        <i className="fas fa-edit text-lg"></i>
                       </Button>
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-red-500 hover:bg-red-600 text-white p-2 min-w-8 h-8"
+                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-red-600"
                         onClick={() => deleteMutation.mutate(customer.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-customer-${customer.id}`}
                       >
-                        🗑️
+                        <i className="fas fa-trash text-lg"></i>
                       </Button>
                     </div>
                   </div>

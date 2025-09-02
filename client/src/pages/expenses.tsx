@@ -194,24 +194,26 @@ export default function Expenses() {
                     <div className="text-sm font-medium">{formatCurrency(parseFloat(expense.amount))}</div>
                     <div className="grid grid-cols-2 gap-1 mt-1">
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-gray-500 hover:bg-gray-600 text-white p-2 min-w-8 h-8"
+                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-gray-700"
                         onClick={() => {
                           setSelectedExpense(expense);
                           setIsDialogOpen(true);
                         }}
                         data-testid={`button-edit-expense-${expense.id}`}
                       >
-                        ✏️
+                        <i className="fas fa-edit text-lg"></i>
                       </Button>
                       <Button
+                        variant="ghost"
                         size="sm"
-                        className="bg-red-500 hover:bg-red-600 text-white p-2 min-w-8 h-8"
+                        className="p-2 min-w-8 h-8 text-gray-500 hover:text-red-600"
                         onClick={() => deleteMutation.mutate(expense.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-expense-${expense.id}`}
                       >
-                        🗑️
+                        <i className="fas fa-trash text-lg"></i>
                       </Button>
                     </div>
                   </div>
