@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Invoice, Customer } from "@shared/schema";
 import InvoiceForm from "@/components/forms/invoice-form";
 import InvoiceDetailModal from "@/components/modals/invoice-detail-modal";
+import PaymentForm from "@/components/forms/payment-form";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date-utils";
 import { queryClient } from "@/lib/queryClient";
@@ -17,7 +18,8 @@ export default function Invoices() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
@@ -49,17 +51,8 @@ export default function Invoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
-    // First filter by tab
-    let passesTabFilter = true;
-    if (activeTab === "all") passesTabFilter = true;
-    else passesTabFilter = invoice.status === activeTab;
-    
-    // Then filter by status dropdown
-    let passesStatusFilter = true;
-    if (statusFilter === "all") passesStatusFilter = true;
-    else passesStatusFilter = invoice.status === statusFilter;
-    
-    return passesTabFilter && passesStatusFilter;
+    if (activeTab === "all") return true;
+    return invoice.status === activeTab;
   });
 
   const getRemainingBalance = (invoice: Invoice) => {
@@ -142,20 +135,6 @@ export default function Invoices() {
         </TabsList>
       </Tabs>
 
-      {/* Status Filter Dropdown */}
-      <div className="mb-4">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48" data-testid="select-status-filter">
-            <SelectValue placeholder="Durum Filtresi" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tüm Durumlar</SelectItem>
-            <SelectItem value="unpaid">Ödenmemiş</SelectItem>
-            <SelectItem value="partial">Kısmi Ödenenler</SelectItem>
-            <SelectItem value="paid">Ödenenler</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
       {/* Invoice List */}
       <div className="space-y-3">
@@ -195,38 +174,58 @@ export default function Invoices() {
                   {formatDate(invoice.issueDate!)}
                 </span>
               </div>
-              <div className="flex space-x-2 mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setViewingInvoice(invoice)}
-                  data-testid={`button-view-invoice-${invoice.id}`}
-                >
-                  <i className="fas fa-eye mr-1"></i>
-                  Görüntüle
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedInvoice(invoice);
-                    setIsDialogOpen(true);
-                  }}
-                  data-testid={`button-edit-invoice-${invoice.id}`}
-                >
-                  <i className="fas fa-edit mr-1"></i>
-                  Düzenle
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => deleteMutation.mutate(invoice.id)}
-                  disabled={deleteMutation.isPending}
-                  data-testid={`button-delete-invoice-${invoice.id}`}
-                >
-                  <i className="fas fa-trash text-red-500 mr-1"></i>
-                  Sil
-                </Button>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className="flex space-x-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setViewingInvoice(invoice)}
+                    data-testid={`button-view-invoice-${invoice.id}`}
+                  >
+                    <i className="fas fa-eye mr-1"></i>
+                    Görüntüle
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      setSelectedInvoice(invoice);
+                      setIsDialogOpen(true);
+                    }}
+                    data-testid={`button-edit-invoice-${invoice.id}`}
+                  >
+                    <i className="fas fa-edit mr-1"></i>
+                    Düzenle
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => deleteMutation.mutate(invoice.id)}
+                    disabled={deleteMutation.isPending}
+                    data-testid={`button-delete-invoice-${invoice.id}`}
+                  >
+                    <i className="fas fa-trash text-red-500 mr-1"></i>
+                    Sil
+                  </Button>
+                </div>
+                {(invoice.status === "unpaid" || invoice.status === "partial") && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                    onClick={() => {
+                      setPaymentInvoice(invoice);
+                      setIsPaymentDialogOpen(true);
+                    }}
+                    data-testid={`button-add-payment-${invoice.id}`}
+                  >
+                    <i className="fas fa-plus mr-1"></i>
+                    Ödeme Ekle
+                  </Button>
+                )}
               </div>
             </div>
           ))
@@ -246,6 +245,24 @@ export default function Invoices() {
           }}
         />
       )}
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ödeme Ekle</DialogTitle>
+          </DialogHeader>
+          {paymentInvoice && (
+            <PaymentForm
+              invoice={paymentInvoice}
+              onSuccess={() => {
+                setIsPaymentDialogOpen(false);
+                setPaymentInvoice(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
