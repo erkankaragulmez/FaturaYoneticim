@@ -76,8 +76,10 @@ export default function Expenses() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries to recalculate totals
       queryClient.invalidateQueries({ queryKey: ["/api/expenses"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/expenses-by-category"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
     },
   });
 

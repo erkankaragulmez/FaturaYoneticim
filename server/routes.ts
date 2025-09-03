@@ -116,11 +116,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete("/api/invoices/:id", async (req, res) => {
     try {
+      // Get the invoice before deletion to update related payments if needed
+      const invoice = await storage.getInvoice(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
       const deleted = await storage.deleteInvoice(req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Invoice not found" });
       }
-      res.json({ success: true });
+      
+      // Force recalculation by setting cache headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json({ success: true, recalculateNeeded: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete invoice" });
     }
@@ -180,7 +189,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deleted) {
         return res.status(404).json({ error: "Expense not found" });
       }
-      res.json({ success: true });
+      
+      // Force recalculation by setting cache headers
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.json({ success: true, recalculateNeeded: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete expense" });
     }
