@@ -39,8 +39,8 @@ export default function Invoices() {
     }
   }, [location]);
 
-  const currentMonth = parseInt(selectedPeriod.split("-")[1]);
-  const currentYear = parseInt(selectedPeriod.split("-")[0]);
+  const currentMonth = selectedPeriod === "yearly" ? 9 : parseInt(selectedPeriod.split("-")[1]);
+  const currentYear = selectedPeriod === "yearly" ? 2025 : parseInt(selectedPeriod.split("-")[0]);
 
   const periodOptions = [
     { value: "yearly", label: "Yıllık" },
