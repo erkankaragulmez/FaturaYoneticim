@@ -173,7 +173,7 @@ export default function Reports() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex-1 min-w-0 p-4 text-sm font-medium border-b-2 whitespace-nowrap rounded-t-lg ${
-              index === 0 ? 'mr-4' : index === 1 ? 'mx-4' : 'ml-4'
+              index === 0 ? 'mr-4 text-left' : index === 1 ? 'mx-4' : 'ml-4'
             } ${
               activeTab === tab.id
                 ? "border-primary text-primary bg-primary/5"
