@@ -16,7 +16,7 @@ import { queryClient } from "@/lib/queryClient";
 export default function Invoices() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("unpaid");
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
@@ -26,6 +26,7 @@ export default function Invoices() {
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
 
   const periodOptions = [
+    { value: "yearly", label: "Yıllık" },
     { value: "2025-12", label: "Aralık 2025" },
     { value: "2025-11", label: "Kasım 2025" },
     { value: "2025-10", label: "Ekim 2025" },
@@ -72,10 +73,9 @@ export default function Invoices() {
   const filteredInvoices = invoices.filter(invoice => {
     const invoiceDate = new Date(invoice.issueDate);
     
-    // For "all" tab, show all invoices from the current year
-    // For other tabs, filter by month
+    // Filter by date based on selected period
     let dateMatch;
-    if (activeTab === "all") {
+    if (selectedPeriod === "yearly") {
       dateMatch = invoiceDate.getFullYear() === currentYear;
     } else {
       dateMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
@@ -84,7 +84,6 @@ export default function Invoices() {
     if (!dateMatch) return false;
     
     // Then filter by status tab
-    if (activeTab === "all") return true;
     return invoice.status === activeTab;
   });
 
@@ -176,8 +175,7 @@ export default function Invoices() {
 
       {/* Filter Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-        <TabsList className="grid w-full grid-cols-4 bg-muted rounded-lg">
-          <TabsTrigger value="all" data-testid="tab-all-invoices">Tümü</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 bg-muted rounded-lg">
           <TabsTrigger value="unpaid" data-testid="tab-unpaid-invoices">Ödenmemiş</TabsTrigger>
           <TabsTrigger value="partial" data-testid="tab-partial-invoices">Kısmi</TabsTrigger>
           <TabsTrigger value="paid" data-testid="tab-paid-invoices">Ödendi</TabsTrigger>
@@ -191,7 +189,7 @@ export default function Invoices() {
           <div className="text-center py-8">
             <i className="fas fa-file-invoice text-4xl text-muted-foreground mb-4"></i>
             <p className="text-muted-foreground">
-              {activeTab === "all" ? "Henüz fatura eklenmemiş" : `${activeTab} durumunda fatura yok`}
+              {selectedPeriod === "yearly" ? "Henüz fatura eklenmemiş" : `${activeTab} durumunda fatura yok`}
             </p>
           </div>
         ) : (

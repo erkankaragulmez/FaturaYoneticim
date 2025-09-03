@@ -179,7 +179,7 @@ export default function Reports() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
+                <CardTitle className="flex items-center text-lg">
                   <i className="fas fa-clock mr-2 text-orange-600"></i>
                   Geciken Alacaklar Raporu
                 </CardTitle>
@@ -194,22 +194,22 @@ export default function Reports() {
                   <div className="space-y-6">
                     {agingData.overdue10to20.length > 0 && (
                       <div>
-                        <h3 className="text-lg font-semibold mb-3 text-orange-600">
+                        <h3 className="text-sm font-semibold mb-3 text-orange-600">
                           10-20 Gün Arasında Bekleyen ({agingData.overdue10to20.length} fatura)
                         </h3>
                         <div className="space-y-2">
                           {agingData.overdue10to20.map((invoice) => (
                             <div key={invoice.id} className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
                               <div>
-                                <p className="font-medium">{invoice.customerName}</p>
+                                <p className="text-sm font-medium">{invoice.customerName}</p>
                                 {invoice.customerCompany && (
-                                  <p className="text-sm text-muted-foreground">{invoice.customerCompany}</p>
+                                  <p className="text-xs text-muted-foreground">{invoice.customerCompany}</p>
                                 )}
-                                <p className="text-sm text-muted-foreground">{invoice.daysPastDue} gün gecikmiş</p>
+                                <p className="text-xs text-muted-foreground">{invoice.daysPastDue} gün gecikmiş</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-bold text-orange-600">{formatCurrency(invoice.remaining)}</p>
-                                <p className="text-sm text-muted-foreground">Vade: {new Date(invoice.dueDate).toLocaleDateString('tr-TR')}</p>
+                                <p className="text-sm font-bold text-orange-600">{formatCurrency(invoice.remaining)}</p>
+                                <p className="text-xs text-muted-foreground">Vade: {new Date(invoice.dueDate).toLocaleDateString('tr-TR')}</p>
                               </div>
                             </div>
                           ))}
@@ -219,22 +219,22 @@ export default function Reports() {
 
                     {agingData.overdue20plus.length > 0 && (
                       <div>
-                        <h3 className="text-lg font-semibold mb-3 text-red-600">
+                        <h3 className="text-sm font-semibold mb-3 text-red-600">
                           20+ Gün Bekleyen ({agingData.overdue20plus.length} fatura)
                         </h3>
                         <div className="space-y-2">
                           {agingData.overdue20plus.map((invoice) => (
                             <div key={invoice.id} className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded-lg">
                               <div>
-                                <p className="font-medium">{invoice.customerName}</p>
+                                <p className="text-sm font-medium">{invoice.customerName}</p>
                                 {invoice.customerCompany && (
-                                  <p className="text-sm text-muted-foreground">{invoice.customerCompany}</p>
+                                  <p className="text-xs text-muted-foreground">{invoice.customerCompany}</p>
                                 )}
-                                <p className="text-sm text-muted-foreground">{invoice.daysPastDue} gün gecikmiş</p>
+                                <p className="text-xs text-muted-foreground">{invoice.daysPastDue} gün gecikmiş</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-bold text-red-600">{formatCurrency(invoice.remaining)}</p>
-                                <p className="text-sm text-muted-foreground">Vade: {new Date(invoice.dueDate).toLocaleDateString('tr-TR')}</p>
+                                <p className="text-sm font-bold text-red-600">{formatCurrency(invoice.remaining)}</p>
+                                <p className="text-xs text-muted-foreground">Vade: {new Date(invoice.dueDate).toLocaleDateString('tr-TR')}</p>
                               </div>
                             </div>
                           ))}
@@ -252,7 +252,7 @@ export default function Reports() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center">
                     <i className="fas fa-chart-pie mr-2 text-blue-600"></i>
                     Masraf Raporu
@@ -305,11 +305,11 @@ export default function Reports() {
                               style={{ backgroundColor: COLORS[index % COLORS.length] }}
                             ></div>
                             <div>
-                              <p className="font-medium">{item.category}</p>
-                              <p className="text-sm text-muted-foreground">{item.count} masraf</p>
+                              <p className="text-sm font-medium">{item.category}</p>
+                              <p className="text-xs text-muted-foreground">{item.count} masraf</p>
                             </div>
                           </div>
-                          <p className="font-bold">{formatCurrency(item.amount)}</p>
+                          <p className="text-sm font-bold">{formatCurrency(item.amount)}</p>
                         </div>
                       ))}
                     </div>
@@ -324,7 +324,7 @@ export default function Reports() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center">
                     <i className="fas fa-users mr-2 text-green-600"></i>
                     Top 5 Müşteri
@@ -355,16 +355,16 @@ export default function Reports() {
                             {index + 1}
                           </div>
                           <div>
-                            <p className="font-medium">{customer.name}</p>
+                            <p className="text-sm font-medium">{customer.name}</p>
                             {customer.company && (
-                              <p className="text-sm text-muted-foreground">{customer.company}</p>
+                              <p className="text-xs text-muted-foreground">{customer.company}</p>
                             )}
-                            <p className="text-sm text-muted-foreground">{customer.invoiceCount} fatura</p>
+                            <p className="text-xs text-muted-foreground">{customer.invoiceCount} fatura</p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-green-600">{formatCurrency(customer.totalInvoiced)}</p>
-                          <p className="text-sm text-muted-foreground">Ödenen: {formatCurrency(customer.totalPaid)}</p>
+                          <p className="text-sm font-bold text-green-600">{formatCurrency(customer.totalInvoiced)}</p>
+                          <p className="text-xs text-muted-foreground">Ödenen: {formatCurrency(customer.totalPaid)}</p>
                         </div>
                       </div>
                     ))}
