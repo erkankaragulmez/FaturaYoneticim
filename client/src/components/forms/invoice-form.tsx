@@ -66,13 +66,17 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="number">Fatura No *</Label>
+        <Label htmlFor="number">Fatura No</Label>
         <Input
           id="number"
           {...form.register("number")}
-          placeholder="FT-2025-001"
+          placeholder="Otomatik olarak oluşturulacak (FT-2025-001)"
           data-testid="input-invoice-number"
+          disabled={!invoice}
         />
+        {!invoice && (
+          <p className="text-sm text-gray-500">Fatura numarası otomatik olarak oluşturulacak</p>
+        )}
         {form.formState.errors.number && (
           <p className="text-sm text-red-600">{form.formState.errors.number.message}</p>
         )}

@@ -23,11 +23,18 @@ export default function Dashboard() {
   });
 
   const periodOptions = [
+    { value: "2025-12", label: "Aralık 2025" },
+    { value: "2025-11", label: "Kasım 2025" },
+    { value: "2025-10", label: "Ekim 2025" },
     { value: "2025-09", label: "Eylül 2025" },
     { value: "2025-08", label: "Ağustos 2025" },
     { value: "2025-07", label: "Temmuz 2025" },
     { value: "2025-06", label: "Haziran 2025" },
     { value: "2025-05", label: "Mayıs 2025" },
+    { value: "2025-04", label: "Nisan 2025" },
+    { value: "2025-03", label: "Mart 2025" },
+    { value: "2025-02", label: "Şubat 2025" },
+    { value: "2025-01", label: "Ocak 2025" },
   ];
 
   if (isLoading) {

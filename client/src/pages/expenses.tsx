@@ -25,9 +25,18 @@ export default function Expenses() {
   });
 
   const periodOptions = [
+    { value: "2025-12", label: "Aralık 2025" },
+    { value: "2025-11", label: "Kasım 2025" },
+    { value: "2025-10", label: "Ekim 2025" },
     { value: "2025-09", label: "Eylül 2025" },
     { value: "2025-08", label: "Ağustos 2025" },
     { value: "2025-07", label: "Temmuz 2025" },
+    { value: "2025-06", label: "Haziran 2025" },
+    { value: "2025-05", label: "Mayıs 2025" },
+    { value: "2025-04", label: "Nisan 2025" },
+    { value: "2025-03", label: "Mart 2025" },
+    { value: "2025-02", label: "Şubat 2025" },
+    { value: "2025-01", label: "Ocak 2025" },
   ];
 
   const categoryIcons = {
@@ -51,6 +60,12 @@ export default function Expenses() {
   };
 
   const totalExpenses = Object.values(categoryData).reduce((sum: number, cat: any) => sum + cat.total, 0);
+
+  // Filter expenses by selected month
+  const filteredExpenses = expenses.filter((expense) => {
+    const expenseDate = new Date(expense.date);
+    return expenseDate.getMonth() + 1 === currentMonth && expenseDate.getFullYear() === currentYear;
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -174,11 +189,11 @@ export default function Expenses() {
       )}
 
       {/* Recent Expenses List */}
-      {expenses.length > 0 && (
+      {filteredExpenses.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-4">Son Masraflar</h3>
+          <h3 className="text-lg font-semibold mb-4">Bu Aydaki Masraflar</h3>
           <div className="space-y-2">
-            {expenses.slice(0, 5).map((expense) => (
+            {filteredExpenses.map((expense) => (
               <div key={expense.id} className="bg-white border border-border rounded-lg p-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">

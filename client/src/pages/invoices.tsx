@@ -20,6 +20,25 @@ export default function Invoices() {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+
+  const currentMonth = parseInt(selectedPeriod.split("-")[1]);
+  const currentYear = parseInt(selectedPeriod.split("-")[0]);
+
+  const periodOptions = [
+    { value: "2025-12", label: "Aralık 2025" },
+    { value: "2025-11", label: "Kasım 2025" },
+    { value: "2025-10", label: "Ekim 2025" },
+    { value: "2025-09", label: "Eylül 2025" },
+    { value: "2025-08", label: "Ağustos 2025" },
+    { value: "2025-07", label: "Temmuz 2025" },
+    { value: "2025-06", label: "Haziran 2025" },
+    { value: "2025-05", label: "Mayıs 2025" },
+    { value: "2025-04", label: "Nisan 2025" },
+    { value: "2025-03", label: "Mart 2025" },
+    { value: "2025-02", label: "Şubat 2025" },
+    { value: "2025-01", label: "Ocak 2025" },
+  ];
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
@@ -51,6 +70,13 @@ export default function Invoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
+    // Filter by month first
+    const invoiceDate = new Date(invoice.issueDate);
+    const monthMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
+    
+    if (!monthMatch) return false;
+    
+    // Then filter by status tab
     if (activeTab === "all") return true;
     return invoice.status === activeTab;
   });
@@ -123,6 +149,22 @@ export default function Invoices() {
             />
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Month Filter */}
+      <div className="mb-4">
+        <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+          <SelectTrigger data-testid="select-invoice-period">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {periodOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Filter Tabs */}

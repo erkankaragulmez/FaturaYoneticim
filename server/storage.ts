@@ -120,11 +120,34 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.issueDate!).getTime() - new Date(a.issueDate!).getTime());
   }
 
+  generateInvoiceNumber(): string {
+    const currentYear = new Date().getFullYear();
+    const yearPrefix = `FT-${currentYear}-`;
+    
+    // Find existing invoices for the current year
+    const currentYearInvoices = Array.from(this.invoices.values())
+      .filter(invoice => invoice.number?.startsWith(yearPrefix))
+      .map(invoice => {
+        const numberPart = invoice.number?.split('-')[2];
+        return numberPart ? parseInt(numberPart, 10) : 0;
+      })
+      .filter(num => !isNaN(num));
+    
+    // Get the next number
+    const nextNumber = currentYearInvoices.length > 0 ? Math.max(...currentYearInvoices) + 1 : 1;
+    
+    // Format with leading zeros (3 digits)
+    return `${yearPrefix}${nextNumber.toString().padStart(3, '0')}`;
+  }
+
   async createInvoice(insertInvoice: InsertInvoice): Promise<Invoice> {
     const id = randomUUID();
+    const invoiceNumber = insertInvoice.number || this.generateInvoiceNumber();
+    
     const invoice: Invoice = { 
       ...insertInvoice,
       id,
+      number: invoiceNumber,
       amount: insertInvoice.amount,
       paidAmount: insertInvoice.paidAmount || "0",
       issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
