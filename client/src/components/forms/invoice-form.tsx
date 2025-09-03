@@ -29,7 +29,8 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       status: invoice?.status || "unpaid",
       description: invoice?.description || "",
       issueDate: invoice?.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      dueDate: invoice?.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : "",
+      dueDate: invoice?.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : 
+        new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     },
   });
 

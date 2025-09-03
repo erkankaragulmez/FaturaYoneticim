@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,6 +15,7 @@ import { formatDate } from "@/lib/date-utils";
 import { queryClient } from "@/lib/queryClient";
 
 export default function Invoices() {
+  const [location] = useLocation();
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("unpaid");
@@ -21,6 +23,21 @@ export default function Invoices() {
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+
+  // Handle URL parameters from dashboard
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const period = params.get('period');
+    const status = params.get('status');
+    
+    if (period) {
+      setSelectedPeriod(period);
+    }
+    
+    if (status === 'paid-partial') {
+      setActiveTab('paid'); // Default to paid, user can switch to partial
+    }
+  }, [location]);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
@@ -77,13 +94,15 @@ export default function Invoices() {
     let dateMatch;
     if (selectedPeriod === "yearly") {
       dateMatch = invoiceDate.getFullYear() === currentYear;
+      // For yearly view, show all invoices regardless of status
+      return dateMatch;
     } else {
       dateMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
     }
     
     if (!dateMatch) return false;
     
-    // Then filter by status tab
+    // For monthly view, filter by status tab
     return invoice.status === activeTab;
   });
 

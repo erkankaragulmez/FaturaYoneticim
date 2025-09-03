@@ -1,15 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 export default function Reports() {
+  const [location] = useLocation();
   const [activeTab, setActiveTab] = useState("aging");
   const [expenseFilter, setExpenseFilter] = useState("monthly");
   const [customerFilter, setCustomerFilter] = useState("monthly");
   const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+
+  // Handle URL parameters from dashboard
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const tab = params.get('tab');
+    
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location]);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);

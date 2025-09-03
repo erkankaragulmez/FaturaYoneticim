@@ -14,7 +14,7 @@ export default function BottomNavigation({ currentPath }: BottomNavigationProps)
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-border">
+    <nav className="fixed bottom-2 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-border">
       <div className="flex justify-around py-2">
         {navItems.map((item) => (
           <Link
