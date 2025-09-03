@@ -70,11 +70,18 @@ export default function Invoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
-    // Filter by month first
     const invoiceDate = new Date(invoice.issueDate);
-    const monthMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
     
-    if (!monthMatch) return false;
+    // For "all" tab, show all invoices from the current year
+    // For other tabs, filter by month
+    let dateMatch;
+    if (activeTab === "all") {
+      dateMatch = invoiceDate.getFullYear() === currentYear;
+    } else {
+      dateMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
+    }
+    
+    if (!dateMatch) return false;
     
     // Then filter by status tab
     if (activeTab === "all") return true;
@@ -192,13 +199,13 @@ export default function Invoices() {
             <div key={invoice.id} className="bg-white border border-border rounded-lg p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-foreground" data-testid={`text-invoice-number-${invoice.id}`}>
+                  <span className="text-xs font-medium text-foreground" data-testid={`text-invoice-number-${invoice.id}`}>
                     {invoice.number}
                   </span>
                   {getStatusBadge(invoice.status || "unpaid")}
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-medium text-foreground" data-testid={`text-invoice-amount-${invoice.id}`}>
+                  <div className="text-xs font-medium text-foreground" data-testid={`text-invoice-amount-${invoice.id}`}>
                     {formatCurrency(parseFloat(invoice.amount))}
                   </div>
                   {invoice.status === "partial" && (
@@ -208,7 +215,7 @@ export default function Invoices() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span data-testid={`text-invoice-customer-${invoice.id}`}>
                   {getCustomerName(invoice.customerId)}
                 </span>
@@ -221,7 +228,7 @@ export default function Invoices() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-sm font-bold"
                     onClick={() => setViewingInvoice(invoice)}
                     data-testid={`button-view-invoice-${invoice.id}`}
                   >
@@ -230,7 +237,7 @@ export default function Invoices() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-sm font-bold"
                     onClick={() => {
                       setSelectedInvoice(invoice);
                       setIsDialogOpen(true);
@@ -242,7 +249,7 @@ export default function Invoices() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
+                    className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-sm font-bold"
                     onClick={() => deleteMutation.mutate(invoice.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}

@@ -21,7 +21,6 @@ export default function CustomerForm({ customer, onSuccess }: CustomerFormProps)
     resolver: zodResolver(insertCustomerSchema),
     defaultValues: {
       name: customer?.name || "",
-      company: customer?.company || "",
       phone: customer?.phone || "",
       email: customer?.email || "",
       address: customer?.address || "",
@@ -113,19 +112,6 @@ export default function CustomerForm({ customer, onSuccess }: CustomerFormProps)
           rows={3}
           className="text-base bg-gray-50 border-gray-200 placeholder:text-gray-400 resize-none"
           data-testid="input-customer-address"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="company" className="text-sm font-medium text-foreground">
-          Şirket
-        </Label>
-        <Input
-          id="company"
-          {...form.register("company")}
-          placeholder="Şirket adı"
-          className="h-12 text-base bg-gray-50 border-gray-200 placeholder:text-gray-400"
-          data-testid="input-customer-company"
         />
       </div>
 

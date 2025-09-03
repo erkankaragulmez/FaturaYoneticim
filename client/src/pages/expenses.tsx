@@ -149,7 +149,7 @@ export default function Expenses() {
 
       {/* Expense Categories */}
       <div className="space-y-3">
-        {Object.keys(categoryData).length === 0 ? (
+        {Object.keys(categoryData).length === 0 && filteredExpenses.length === 0 ? (
           <div className="text-center py-8">
             <i className="fas fa-credit-card text-4xl text-muted-foreground mb-4"></i>
             <p className="text-muted-foreground">Bu dönemde masraf kaydı yok</p>
