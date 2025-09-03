@@ -167,12 +167,12 @@ export default function Reports() {
       </div>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto border-b border-border">
-        {tabs.map((tab) => (
+      <div className="flex overflow-x-auto border-b border-border px-2">
+        {tabs.map((tab, index) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-0 p-4 text-sm font-medium border-b-2 whitespace-nowrap ${
+            className={`flex-1 min-w-0 p-4 mx-1 text-sm font-medium border-b-2 whitespace-nowrap rounded-t-lg ${
               activeTab === tab.id
                 ? "border-primary text-primary bg-primary/5"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300"
