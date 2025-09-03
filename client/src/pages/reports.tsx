@@ -172,13 +172,13 @@ export default function Reports() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-0 p-4 text-sm font-medium border-b-2 whitespace-nowrap rounded-t-lg ${
-              index === 0 ? 'mr-4 text-left' : index === 1 ? 'mx-4' : 'ml-4'
+            className={`flex-1 min-w-0 text-sm font-medium border-b-2 whitespace-nowrap rounded-t-lg ${
+              index === 0 ? 'mr-4 pl-2 pr-4 py-4 justify-start text-left' : index === 1 ? 'mx-4 p-4' : 'ml-4 p-4'
             } ${
               activeTab === tab.id
                 ? "border-primary text-primary bg-primary/5"
                 : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300"
-            }`}
+            } flex items-center`}
             data-testid={`tab-${tab.id}`}
           >
             <i className={`${tab.icon} mr-2`}></i>
