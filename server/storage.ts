@@ -173,6 +173,13 @@ export class MemStorage implements IStorage {
   }
 
   async deleteInvoice(id: string): Promise<boolean> {
+    // Get all payments for this invoice and delete them first
+    const relatedPayments = await this.getPaymentsByInvoice(id);
+    relatedPayments.forEach(payment => {
+      this.payments.delete(payment.id);
+    });
+    
+    // Then delete the invoice
     return this.invoices.delete(id);
   }
 

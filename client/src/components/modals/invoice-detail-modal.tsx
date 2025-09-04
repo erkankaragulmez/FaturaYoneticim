@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { type Invoice, type Customer, type Payment } from "@shared/schema";
-import PaymentForm from "@/components/forms/payment-form";
 import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/date-utils";
 
@@ -22,7 +20,6 @@ export default function InvoiceDetailModal({
   onClose, 
   onEdit 
 }: InvoiceDetailModalProps) {
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   const { data: payments = [] } = useQuery<Payment[]>({
     queryKey: ["/api/payments/invoice", invoice?.id],
@@ -42,25 +39,6 @@ export default function InvoiceDetailModal({
   };
 
   const remainingAmount = parseFloat(invoice.amount) - parseFloat(invoice.paidAmount || "0");
-  const canAddPayment = remainingAmount > 0;
-
-  if (showPaymentForm) {
-    return (
-      <Dialog open={true} onOpenChange={() => setShowPaymentForm(false)}>
-        <DialogContent className="w-full max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ödeme Ekle</DialogTitle>
-          </DialogHeader>
-          <PaymentForm 
-            invoice={invoice} 
-            onSuccess={() => {
-              setShowPaymentForm(false);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -144,16 +122,6 @@ export default function InvoiceDetailModal({
 
           {/* Action Buttons */}
           <div className="space-y-2 pt-4">
-            {canAddPayment && (
-              <Button
-                onClick={() => setShowPaymentForm(true)}
-                className="w-full bg-secondary text-secondary-foreground"
-                data-testid="button-add-payment"
-              >
-                <i className="fas fa-plus mr-2"></i>
-                Ödeme Ekle
-              </Button>
-            )}
             <Button
               onClick={onClose}
               variant="outline"

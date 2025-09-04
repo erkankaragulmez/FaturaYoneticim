@@ -124,6 +124,7 @@ export default function Invoices() {
       // Invalidate all related queries to recalculate totals
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
     },
   });
 
