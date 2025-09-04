@@ -23,6 +23,14 @@ export default function Customers() {
     queryKey: ["/api/invoices"],
   });
 
+  const getCustomerBalance = (customerId: string) => {
+    const customerInvoices = invoices.filter((inv: any) => inv.customerId === customerId);
+    return customerInvoices.reduce((total: number, invoice: any) => {
+      const remaining = parseFloat(invoice.amount) - parseFloat(invoice.paidAmount || "0");
+      return total + remaining;
+    }, 0);
+  };
+
   const filteredCustomers = customers.filter(customer => {
     // First filter by search term
     const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -38,14 +46,6 @@ export default function Customers() {
     
     return true;
   });
-
-  const getCustomerBalance = (customerId: string) => {
-    const customerInvoices = invoices.filter((inv: any) => inv.customerId === customerId);
-    return customerInvoices.reduce((total: number, invoice: any) => {
-      const remaining = parseFloat(invoice.amount) - parseFloat(invoice.paidAmount || "0");
-      return total + remaining;
-    }, 0);
-  };
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
