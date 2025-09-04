@@ -76,7 +76,7 @@ export default function Dashboard() {
           </Select>
           <Button 
             size="icon"
-            className="bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm"
+            className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 hover:border-primary/90 shadow-md"
             onClick={() => {
               const currentIndex = periodOptions.findIndex(p => p.value === selectedPeriod);
               if (currentIndex < periodOptions.length - 1) {
@@ -85,11 +85,11 @@ export default function Dashboard() {
             }}
             data-testid="button-previous-month"
           >
-            <i className="fas fa-chevron-left text-gray-700"></i>
+            <i className="fas fa-chevron-left"></i>
           </Button>
           <Button 
             size="icon"
-            className="bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 shadow-sm"
+            className="bg-primary text-primary-foreground border-2 border-primary hover:bg-primary/90 hover:border-primary/90 shadow-md"
             onClick={() => {
               const currentIndex = periodOptions.findIndex(p => p.value === selectedPeriod);
               if (currentIndex > 0) {
@@ -98,7 +98,7 @@ export default function Dashboard() {
             }}
             data-testid="button-next-month"
           >
-            <i className="fas fa-chevron-right text-gray-700"></i>
+            <i className="fas fa-chevron-right"></i>
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
