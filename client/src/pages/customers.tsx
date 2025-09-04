@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Customer } from "@shared/schema";
 import CustomerForm from "@/components/forms/customer-form";
@@ -12,6 +13,7 @@ export default function Customers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [hideZeroBalance, setHideZeroBalance] = useState(false);
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -21,10 +23,21 @@ export default function Customers() {
     queryKey: ["/api/invoices"],
   });
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredCustomers = customers.filter(customer => {
+    // First filter by search term
+    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    if (!matchesSearch) return false;
+    
+    // Then filter by balance if hideZeroBalance is enabled
+    if (hideZeroBalance) {
+      const balance = getCustomerBalance(customer.id);
+      return balance > 0;
+    }
+    
+    return true;
+  });
 
   const getCustomerBalance = (customerId: string) => {
     const customerInvoices = invoices.filter((inv: any) => inv.customerId === customerId);
@@ -108,6 +121,24 @@ export default function Customers() {
           data-testid="input-search-customers"
         />
         <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
+      </div>
+      
+      {/* Filter Options */}
+      <div className="mb-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox 
+            id="hide-zero-balance"
+            checked={hideZeroBalance}
+            onCheckedChange={setHideZeroBalance}
+            data-testid="checkbox-hide-zero-balance"
+          />
+          <label 
+            htmlFor="hide-zero-balance" 
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            Sıfır bakiyeli müşterileri gizle
+          </label>
+        </div>
       </div>
 
       {/* Customer List */}
