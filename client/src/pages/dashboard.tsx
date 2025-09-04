@@ -85,7 +85,7 @@ export default function Dashboard() {
             }}
             data-testid="button-previous-month"
           >
-            <i className="fas fa-chevron-left" style={{ color: '#ffffff' }}></i>
+            <span className="text-white font-bold text-lg">‹</span>
           </Button>
           <Button 
             size="icon"
@@ -98,7 +98,7 @@ export default function Dashboard() {
             }}
             data-testid="button-next-month"
           >
-            <i className="fas fa-chevron-right" style={{ color: '#ffffff' }}></i>
+            <span className="text-white font-bold text-lg">›</span>
           </Button>
         </div>
         <p className="text-sm text-muted-foreground mt-2">
