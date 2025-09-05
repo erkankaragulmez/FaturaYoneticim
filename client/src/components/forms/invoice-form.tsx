@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,9 +31,17 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       description: invoice?.description || "",
       issueDate: invoice?.issueDate ? new Date(invoice.issueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       dueDate: invoice?.dueDate ? new Date(invoice.dueDate).toISOString().split('T')[0] : 
-        new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        new Date().toISOString().split('T')[0],
     },
   });
+
+  // Fatura tarihi değiştiğinde vade tarihini otomatik güncelle
+  const issueDate = form.watch("issueDate");
+  useEffect(() => {
+    if (issueDate && !invoice) { // Sadece yeni fatura oluştururken otomatik güncelle
+      form.setValue("dueDate", issueDate);
+    }
+  }, [issueDate, form, invoice]);
 
   const mutation = useMutation({
     mutationFn: async (data: InsertInvoice) => {
@@ -84,7 +93,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="customerId">Müşteri</Label>
+        <Label htmlFor="customerId">Müşteri *</Label>
         <Select
           value={form.watch("customerId") || ""}
           onValueChange={(value) => form.setValue("customerId", value)}
@@ -100,6 +109,9 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
             ))}
           </SelectContent>
         </Select>
+        {form.formState.errors.customerId && (
+          <p className="text-sm text-red-600">{form.formState.errors.customerId.message}</p>
+        )}
       </div>
 
       <div className="space-y-2">

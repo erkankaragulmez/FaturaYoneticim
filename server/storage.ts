@@ -13,6 +13,7 @@ export interface IStorage {
   createCustomer(customer: InsertCustomer): Promise<Customer>;
   updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer>;
   deleteCustomer(id: string): Promise<boolean>;
+  hasCustomerInvoices(customerId: string): Promise<boolean>;
 
   // Invoices
   getInvoices(): Promise<Invoice[]>;
@@ -99,7 +100,17 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
+  async hasCustomerInvoices(customerId: string): Promise<boolean> {
+    const customerInvoices = await this.getInvoicesByCustomer(customerId);
+    return customerInvoices.length > 0;
+  }
+
   async deleteCustomer(id: string): Promise<boolean> {
+    // Müşterinin faturası varsa silmeye izin verme
+    const hasInvoices = await this.hasCustomerInvoices(id);
+    if (hasInvoices) {
+      throw new Error("Bu müşteriyi silemezsiniz çünkü sistemde faturası bulunmaktadır");
+    }
     return this.customers.delete(id);
   }
 

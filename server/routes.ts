@@ -61,7 +61,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Customer not found" });
       }
       res.json({ success: true });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message && error.message.includes("sistemde faturası")) {
+        return res.status(400).json({ error: error.message });
+      }
       res.status(500).json({ error: "Failed to delete customer" });
     }
   });

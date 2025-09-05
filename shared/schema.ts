@@ -53,6 +53,7 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   createdAt: true,
 }).extend({
   number: z.string().optional(),
+  customerId: z.string().min(1, "Müşteri seçimi zorunludur"),
   amount: z.string().min(1, "Tutar gereklidir"),
   paidAmount: z.string().optional(),
   issueDate: z.string().optional(),
