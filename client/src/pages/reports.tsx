@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/currency";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import InvoiceDetailModal from "@/components/modals/invoice-detail-modal";
 
 export default function Reports() {
   const [location] = useLocation();
@@ -12,6 +13,7 @@ export default function Reports() {
   const [expenseFilter, setExpenseFilter] = useState("monthly");
   const [customerFilter, setCustomerFilter] = useState("monthly");
   const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+  const [viewingInvoice, setViewingInvoice] = useState<any>(null);
 
   // Handle URL parameters from dashboard
   useEffect(() => {
@@ -144,6 +146,12 @@ export default function Reports() {
   const expenseData = getExpenseReport();
   const topCustomersData = getTopCustomers();
 
+  // Helper function to get customer data
+  const getCustomer = (customerId: string | null) => {
+    if (!customerId) return null;
+    return customers.find((c: any) => c.id === customerId) || null;
+  };
+
   // Pie chart colors
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -213,7 +221,12 @@ export default function Reports() {
                         </h3>
                         <div className="space-y-2">
                           {agingData.overdue10to20.map((invoice) => (
-                            <div key={invoice.id} className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div 
+                              key={invoice.id} 
+                              className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                              onClick={() => setViewingInvoice(invoice)}
+                              data-testid={`overdue-invoice-${invoice.id}`}
+                            >
                               <div>
                                 <p className="text-sm font-medium">{invoice.customerName}</p>
                                 {invoice.customerCompany && (
@@ -238,7 +251,12 @@ export default function Reports() {
                         </h3>
                         <div className="space-y-2">
                           {agingData.overdue20plus.map((invoice) => (
-                            <div key={invoice.id} className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div 
+                              key={invoice.id} 
+                              className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                              onClick={() => setViewingInvoice(invoice)}
+                              data-testid={`overdue-invoice-${invoice.id}`}
+                            >
                               <div>
                                 <p className="text-sm font-medium">{invoice.customerName}</p>
                                 {invoice.customerCompany && (
@@ -389,6 +407,20 @@ export default function Reports() {
           </div>
         )}
       </div>
+
+      {/* Invoice Detail Modal */}
+      {viewingInvoice && (
+        <InvoiceDetailModal
+          invoice={viewingInvoice}
+          customer={getCustomer(viewingInvoice.customerId)}
+          onClose={() => setViewingInvoice(null)}
+          onEdit={() => {
+            // Navigate to invoices page for editing
+            window.location.href = '/invoices';
+            setViewingInvoice(null);
+          }}
+        />
+      )}
     </div>
   );
 }
