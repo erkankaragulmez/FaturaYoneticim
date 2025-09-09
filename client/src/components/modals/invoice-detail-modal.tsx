@@ -101,29 +101,41 @@ export default function InvoiceDetailModal({
             <div>
               <h3 className="font-medium text-foreground mb-3">Ödeme Geçmişi ({payments.length} ödeme)</h3>
               <div className="space-y-2">
-                {payments.map((payment) => (
+                {payments
+                  .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime())
+                  .map((payment, index) => (
                   <div key={payment.id} className="bg-green-50 p-3 rounded-lg border border-green-200">
                     <div className="flex justify-between items-center">
-                      <div>
-                        <div className="font-medium text-green-700">
-                          {formatCurrency(parseFloat(payment.amount))}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="font-medium text-green-700">
+                            {formatCurrency(parseFloat(payment.amount))}
+                          </div>
+                          <span className="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full">
+                            #{index + 1}
+                          </span>
                         </div>
                         <div className="text-xs text-green-600">
                           {payment.date ? formatDate(payment.date) : 'Tarih belirtilmemiş'}
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <i className="fas fa-check-circle text-green-500 mb-1"></i>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-xs text-muted-foreground mt-1">
                           {payment.date ? new Date(payment.date).toLocaleTimeString('tr-TR', { 
                             hour: '2-digit', 
                             minute: '2-digit' 
                           }) : ''}
                         </div>
                       </div>
+                      <div className="text-right">
+                        <i className="fas fa-check-circle text-green-500 text-lg"></i>
+                      </div>
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="mt-3 p-2 bg-blue-50 rounded-lg">
+                <div className="text-xs text-blue-700 text-center">
+                  Toplam {payments.length} ödeme • Son ödeme: {payments.length > 0 ? formatDate(Math.max(...payments.map(p => new Date(p.date!).getTime()))) : ''}
+                </div>
               </div>
             </div>
           )}
