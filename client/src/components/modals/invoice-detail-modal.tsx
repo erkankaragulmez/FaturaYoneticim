@@ -99,7 +99,7 @@ export default function InvoiceDetailModal({
           {/* Payment History */}
           {payments.length > 0 && (
             <div>
-              <h3 className="font-medium text-foreground mb-3">Ödeme Geçmişi</h3>
+              <h3 className="font-medium text-foreground mb-3">Ödeme Geçmişi ({payments.length} ödeme)</h3>
               <div className="space-y-2">
                 {payments.map((payment) => (
                   <div key={payment.id} className="bg-green-50 p-3 rounded-lg border border-green-200">
@@ -109,10 +109,18 @@ export default function InvoiceDetailModal({
                           {formatCurrency(parseFloat(payment.amount))}
                         </div>
                         <div className="text-xs text-green-600">
-                          {formatDate(payment.date!)}
+                          {payment.date ? formatDate(payment.date) : 'Tarih belirtilmemiş'}
                         </div>
                       </div>
-                      <i className="fas fa-check-circle text-green-500"></i>
+                      <div className="text-right">
+                        <i className="fas fa-check-circle text-green-500 mb-1"></i>
+                        <div className="text-xs text-muted-foreground">
+                          {payment.date ? new Date(payment.date).toLocaleTimeString('tr-TR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          }) : ''}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
