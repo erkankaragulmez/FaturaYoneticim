@@ -21,10 +21,18 @@ export default function InvoiceDetailModal({
   onEdit 
 }: InvoiceDetailModalProps) {
 
-  const { data: payments = [] } = useQuery<Payment[]>({
+  const { data: payments = [], isLoading: paymentsLoading, error: paymentsError } = useQuery<Payment[]>({
     queryKey: ["/api/payments/invoice", invoice?.id],
     enabled: !!invoice?.id,
+    staleTime: 0, // Always refetch to get latest payments
+    gcTime: 0, // Don't cache to avoid stale data
   });
+
+  // Debug logging
+  console.log("Invoice ID:", invoice?.id);
+  console.log("Payments data:", payments);
+  console.log("Payments loading:", paymentsLoading);
+  console.log("Payments error:", paymentsError);
 
   if (!invoice) return null;
 
