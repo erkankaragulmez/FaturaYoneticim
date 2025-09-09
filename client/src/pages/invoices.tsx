@@ -94,15 +94,13 @@ export default function Invoices() {
     let dateMatch;
     if (selectedPeriod === "yearly") {
       dateMatch = invoiceDate.getFullYear() === currentYear;
-      // For yearly view, show all invoices regardless of status
-      return dateMatch;
     } else {
       dateMatch = invoiceDate.getMonth() + 1 === currentMonth && invoiceDate.getFullYear() === currentYear;
     }
     
     if (!dateMatch) return false;
     
-    // For monthly view, filter by status tab
+    // Filter by status tab for both yearly and monthly views
     return invoice.status === activeTab;
   });
 
