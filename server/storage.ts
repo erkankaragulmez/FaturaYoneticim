@@ -84,9 +84,31 @@ export class MemStorage implements IStorage {
   }
 
   async signInUser(username: string, password: string): Promise<User | undefined> {
-    const user = Array.from(this.users.values()).find(
+    console.log("🔍 SignIn attempt:");
+    console.log("  - Looking for username:", username);
+    console.log("  - Looking for password:", password);
+    
+    const allUsers = Array.from(this.users.values());
+    console.log("  - Total users in system:", allUsers.length);
+    
+    allUsers.forEach((user, index) => {
+      console.log(`  - User ${index + 1}:`, {
+        username: user.username,
+        password: user.password,
+        firstName: user.firstName,
+        lastName: user.lastName
+      });
+    });
+    
+    const user = allUsers.find(
       (user) => user.username === username && user.password === password,
     );
+    
+    console.log("  - Match found:", user ? "YES" : "NO");
+    if (user) {
+      console.log("  - Matched user:", { username: user.username, firstName: user.firstName });
+    }
+    
     return user;
   }
 
