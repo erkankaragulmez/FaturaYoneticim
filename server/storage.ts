@@ -6,7 +6,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  signInUser(username: string, password: string): Promise<User | undefined>;
+  signInUser(username: string): Promise<User | undefined>;
 
   // Customers
   getCustomers(): Promise<Customer[]>;
@@ -69,46 +69,21 @@ export class MemStorage implements IStorage {
     // Generate username: firstName + first 3 letters of lastName
     const username = insertUser.firstName + insertUser.lastName.substring(0, 3);
     
-    // Generate password: birthDay birthMonth birthYear (e.g. "15 3 1990")
-    const password = `${insertUser.birthDay} ${insertUser.birthMonth} ${insertUser.birthYear}`;
-    
     const user: User = { 
       ...insertUser, 
       id,
       username,
-      password,
+      password: "", // Not used anymore
       createdAt: new Date()
     };
     this.users.set(id, user);
     return user;
   }
 
-  async signInUser(username: string, password: string): Promise<User | undefined> {
-    console.log("🔍 SignIn attempt:");
-    console.log("  - Looking for username:", username);
-    console.log("  - Looking for password:", password);
-    
-    const allUsers = Array.from(this.users.values());
-    console.log("  - Total users in system:", allUsers.length);
-    
-    allUsers.forEach((user, index) => {
-      console.log(`  - User ${index + 1}:`, {
-        username: user.username,
-        password: user.password,
-        firstName: user.firstName,
-        lastName: user.lastName
-      });
-    });
-    
-    const user = allUsers.find(
-      (user) => user.username === username && user.password === password,
+  async signInUser(username: string): Promise<User | undefined> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.username === username,
     );
-    
-    console.log("  - Match found:", user ? "YES" : "NO");
-    if (user) {
-      console.log("  - Matched user:", { username: user.username, firstName: user.firstName });
-    }
-    
     return user;
   }
 
