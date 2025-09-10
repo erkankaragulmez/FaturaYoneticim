@@ -4,6 +4,16 @@ import { storage } from "./storage";
 import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema, insertUserSchema, signInSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Authentication middleware to extract userId from session
+function requireAuth(req: any, res: any, next: any) {
+  const userId = req.session?.userId;
+  if (!userId) {
+    return res.status(401).json({ error: "Giriş yapılmamış" });
+  }
+  req.userId = userId;
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Authentication API
@@ -104,18 +114,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Customers API
-  app.get("/api/customers", async (req, res) => {
+  app.get("/api/customers", requireAuth, async (req: any, res) => {
     try {
-      const customers = await storage.getCustomers();
+      const customers = await storage.getCustomers(req.userId);
       res.json(customers);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch customers" });
     }
   });
 
-  app.get("/api/customers/:id", async (req, res) => {
+  app.get("/api/customers/:id", requireAuth, async (req: any, res) => {
     try {
-      const customer = await storage.getCustomer(req.params.id);
+      const customer = await storage.getCustomer(req.params.id, req.userId);
       if (!customer) {
         return res.status(404).json({ error: "Customer not found" });
       }
@@ -125,10 +135,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers", async (req, res) => {
+  app.post("/api/customers", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertCustomerSchema.parse(req.body);
-      const customer = await storage.createCustomer(validatedData);
+      const customer = await storage.createCustomer(validatedData, req.userId);
       res.status(201).json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -138,10 +148,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/customers/:id", async (req, res) => {
+  app.put("/api/customers/:id", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertCustomerSchema.partial().parse(req.body);
-      const customer = await storage.updateCustomer(req.params.id, validatedData);
+      const customer = await storage.updateCustomer(req.params.id, validatedData, req.userId);
       res.json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -151,9 +161,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/customers/:id", async (req, res) => {
+  app.delete("/api/customers/:id", requireAuth, async (req: any, res) => {
     try {
-      const deleted = await storage.deleteCustomer(req.params.id);
+      const deleted = await storage.deleteCustomer(req.params.id, req.userId);
       if (!deleted) {
         return res.status(404).json({ error: "Customer not found" });
       }
@@ -167,18 +177,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoices API
-  app.get("/api/invoices", async (req, res) => {
+  app.get("/api/invoices", requireAuth, async (req: any, res) => {
     try {
-      const invoices = await storage.getInvoices();
+      const invoices = await storage.getInvoices(req.userId);
       res.json(invoices);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch invoices" });
     }
   });
 
-  app.get("/api/invoices/:id", async (req, res) => {
+  app.get("/api/invoices/:id", requireAuth, async (req: any, res) => {
     try {
-      const invoice = await storage.getInvoice(req.params.id);
+      const invoice = await storage.getInvoice(req.params.id, req.userId);
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -188,10 +198,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/invoices", async (req, res) => {
+  app.post("/api/invoices", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertInvoiceSchema.parse(req.body);
-      const invoice = await storage.createInvoice(validatedData);
+      const invoice = await storage.createInvoice(validatedData, req.userId);
       res.status(201).json(invoice);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -201,10 +211,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/invoices/:id", async (req, res) => {
+  app.put("/api/invoices/:id", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertInvoiceSchema.partial().parse(req.body);
-      const invoice = await storage.updateInvoice(req.params.id, validatedData);
+      const invoice = await storage.updateInvoice(req.params.id, validatedData, req.userId);
       res.json(invoice);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -214,15 +224,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/invoices/:id", async (req, res) => {
+  app.delete("/api/invoices/:id", requireAuth, async (req: any, res) => {
     try {
       // Get the invoice before deletion to update related payments if needed
-      const invoice = await storage.getInvoice(req.params.id);
+      const invoice = await storage.getInvoice(req.params.id, req.userId);
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
       
-      const deleted = await storage.deleteInvoice(req.params.id);
+      const deleted = await storage.deleteInvoice(req.params.id, req.userId);
       if (!deleted) {
         return res.status(404).json({ error: "Invoice not found" });
       }
@@ -236,18 +246,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Expenses API
-  app.get("/api/expenses", async (req, res) => {
+  app.get("/api/expenses", requireAuth, async (req: any, res) => {
     try {
-      const expenses = await storage.getExpenses();
+      const expenses = await storage.getExpenses(req.userId);
       res.json(expenses);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch expenses" });
     }
   });
 
-  app.get("/api/expenses/:id", async (req, res) => {
+  app.get("/api/expenses/:id", requireAuth, async (req: any, res) => {
     try {
-      const expense = await storage.getExpense(req.params.id);
+      const expense = await storage.getExpense(req.params.id, req.userId);
       if (!expense) {
         return res.status(404).json({ error: "Expense not found" });
       }
@@ -257,10 +267,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/expenses", async (req, res) => {
+  app.post("/api/expenses", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertExpenseSchema.parse(req.body);
-      const expense = await storage.createExpense(validatedData);
+      const expense = await storage.createExpense(validatedData, req.userId);
       res.status(201).json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -270,10 +280,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/expenses/:id", async (req, res) => {
+  app.put("/api/expenses/:id", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertExpenseSchema.partial().parse(req.body);
-      const expense = await storage.updateExpense(req.params.id, validatedData);
+      const expense = await storage.updateExpense(req.params.id, validatedData, req.userId);
       res.json(expense);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -283,9 +293,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/expenses/:id", async (req, res) => {
+  app.delete("/api/expenses/:id", requireAuth, async (req: any, res) => {
     try {
-      const deleted = await storage.deleteExpense(req.params.id);
+      const deleted = await storage.deleteExpense(req.params.id, req.userId);
       if (!deleted) {
         return res.status(404).json({ error: "Expense not found" });
       }
@@ -299,34 +309,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Payments API
-  app.get("/api/payments", async (req, res) => {
+  app.get("/api/payments", requireAuth, async (req: any, res) => {
     try {
-      const payments = await storage.getPayments();
+      const payments = await storage.getPayments(req.userId);
       res.json(payments);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch payments" });
     }
   });
 
-  app.get("/api/payments/invoice/:invoiceId", async (req, res) => {
+  app.get("/api/payments/invoice/:invoiceId", requireAuth, async (req: any, res) => {
     try {
-      const payments = await storage.getPaymentsByInvoice(req.params.invoiceId);
+      const payments = await storage.getPaymentsByInvoice(req.params.invoiceId, req.userId);
       res.json(payments);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch payments" });
     }
   });
 
-  app.post("/api/payments", async (req, res) => {
+  app.post("/api/payments", requireAuth, async (req: any, res) => {
     try {
       const validatedData = insertPaymentSchema.parse(req.body);
-      const payment = await storage.createPayment(validatedData);
+      const payment = await storage.createPayment(validatedData, req.userId);
       
       // Update invoice status based on payments
       if (payment.invoiceId) {
-        const invoice = await storage.getInvoice(payment.invoiceId);
+        const invoice = await storage.getInvoice(payment.invoiceId, req.userId);
         if (invoice) {
-          const payments = await storage.getPaymentsByInvoice(payment.invoiceId);
+          const payments = await storage.getPaymentsByInvoice(payment.invoiceId, req.userId);
           const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
           const invoiceAmount = parseFloat(invoice.amount);
           
@@ -340,7 +350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.updateInvoice(payment.invoiceId, { 
             paidAmount: totalPaid.toString(),
             status 
-          });
+          }, req.userId);
         }
       }
       
@@ -354,15 +364,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Analytics API
-  app.get("/api/analytics/dashboard", async (req, res) => {
+  app.get("/api/analytics/dashboard", requireAuth, async (req: any, res) => {
     try {
       const { month, year } = req.query;
       const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
       const currentYear = year ? parseInt(year as string) : new Date().getFullYear();
       
-      const invoices = await storage.getInvoices();
-      const expenses = await storage.getExpenses();
-      const payments = await storage.getPayments();
+      const invoices = await storage.getInvoices(req.userId);
+      const expenses = await storage.getExpenses(req.userId);
+      const payments = await storage.getPayments(req.userId);
       
       // Monthly calculations
       const monthlyInvoices = invoices.filter(inv => {
@@ -426,13 +436,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/analytics/expenses-by-category", async (req, res) => {
+  app.get("/api/analytics/expenses-by-category", requireAuth, async (req: any, res) => {
     try {
       const { month, year } = req.query;
       const currentMonth = month ? parseInt(month as string) : new Date().getMonth() + 1;
       const currentYear = year ? parseInt(year as string) : new Date().getFullYear();
       
-      const expenses = await storage.getExpenses();
+      const expenses = await storage.getExpenses(req.userId);
       const filteredExpenses = expenses.filter(exp => {
         const date = new Date(exp.date!);
         return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
