@@ -105,7 +105,6 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const signInSchema = z.object({
   username: z.string().min(1, "Kullanıcı adı gereklidir"),
-  password: z.string().min(1, "Şifre gereklidir"),
 });
 
 export type Customer = typeof customers.$inferSelect;
