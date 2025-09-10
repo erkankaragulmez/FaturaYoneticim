@@ -2,6 +2,9 @@ import { ReactNode, useState } from "react";
 import { useLocation } from "wouter";
 import BottomNavigation from "@/components/ui/bottom-navigation";
 import SideMenu from "@/components/ui/side-menu";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface MobileLayoutProps {
   children: ReactNode;
@@ -10,6 +13,7 @@ interface MobileLayoutProps {
 export default function MobileLayout({ children }: MobileLayoutProps) {
   const [location] = useLocation();
   const [isSideMenuOpen, setIsSideMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   const getPageTitle = () => {
     switch (location) {
@@ -37,9 +41,26 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
           <i className="fas fa-receipt text-lg"></i>
           <h1 className="text-lg font-semibold">FaturaYoneticim</h1>
         </div>
-        <button className="text-xl" data-testid="button-profile">
-          <i className="fas fa-user-circle"></i>
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-primary-foreground/80" data-testid="button-profile">
+              <i className="fas fa-user-circle text-xl mr-2"></i>
+              <span className="text-sm">{user?.firstName}</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem disabled>
+              <div className="flex flex-col text-left">
+                <span className="font-medium">{user?.firstName} {user?.lastName}</span>
+                <span className="text-xs text-muted-foreground">@{user?.username}</span>
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={logout} className="text-red-600 focus:text-red-600" data-testid="button-logout">
+              <i className="fas fa-sign-out-alt mr-2"></i>
+              Çıkış Yap
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Main Content */}
