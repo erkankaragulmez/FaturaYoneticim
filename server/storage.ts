@@ -163,13 +163,13 @@ export class MemStorage implements IStorage {
       .sort((a, b) => new Date(b.issueDate!).getTime() - new Date(a.issueDate!).getTime());
   }
 
-  generateInvoiceNumber(): string {
+  generateInvoiceNumber(userId: string): string {
     const currentYear = new Date().getFullYear();
     const yearPrefix = `FT-${currentYear}-`;
     
-    // Find existing invoices for the current year
+    // Find existing invoices for the current year and user
     const currentYearInvoices = Array.from(this.invoices.values())
-      .filter(invoice => invoice.number?.startsWith(yearPrefix))
+      .filter(invoice => invoice.userId === userId && invoice.number?.startsWith(yearPrefix))
       .map(invoice => {
         const numberPart = invoice.number?.split('-')[2];
         return numberPart ? parseInt(numberPart, 10) : 0;
@@ -185,7 +185,7 @@ export class MemStorage implements IStorage {
 
   async createInvoice(insertInvoice: InsertInvoice, userId: string): Promise<Invoice> {
     const id = randomUUID();
-    const invoiceNumber = insertInvoice.number || this.generateInvoiceNumber();
+    const invoiceNumber = insertInvoice.number || this.generateInvoiceNumber(userId);
     
     const invoice: Invoice = { 
       ...insertInvoice,
