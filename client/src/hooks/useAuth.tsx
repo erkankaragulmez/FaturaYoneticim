@@ -43,7 +43,8 @@ export function useAuth() {
     try {
       await apiRequest("POST", "/api/auth/logout");
       queryClient.setQueryData(["/api/auth/user"], null);
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Clear all cached data to ensure user isolation
+      queryClient.clear();
     } catch (error) {
       console.error("Logout error:", error);
     }

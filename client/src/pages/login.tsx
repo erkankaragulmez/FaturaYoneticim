@@ -79,7 +79,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         description: `Hoş geldiniz ${data.user.firstName}!`,
         variant: "default",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Clear all cached data to ensure user isolation when switching users
+      queryClient.clear();
       onLoginSuccess();
     },
     onError: (error: any) => {
