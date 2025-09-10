@@ -60,18 +60,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Kullanıcı adı hatalı" });
       }
       
-      // Store user in session
+      // Store user in session and save explicitly
       (req as any).session.userId = user.id;
-      
-      res.json({ 
-        success: true, 
-        user: {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          username: user.username
-        },
-        message: "Giriş başarılı"
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ error: "Oturum hatası" });
+        }
+        
+        res.json({ 
+          success: true, 
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username
+          },
+          message: "Giriş başarılı"
+        });
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
