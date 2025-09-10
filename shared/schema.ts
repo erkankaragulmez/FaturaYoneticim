@@ -5,6 +5,7 @@ import { z } from "zod";
 
 export const customers = pgTable("customers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   name: text("name").notNull(),
   company: text("company"),
   phone: text("phone"),
@@ -15,6 +16,7 @@ export const customers = pgTable("customers", {
 
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   number: text("number").notNull().unique(),
   customerId: varchar("customer_id").references(() => customers.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -28,6 +30,7 @@ export const invoices = pgTable("invoices", {
 
 export const expenses = pgTable("expenses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
   category: text("category").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   description: text("description"),
@@ -58,11 +61,13 @@ export const users = pgTable("users", {
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
+  userId: true, // Will be added from session
   createdAt: true,
 });
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
+  userId: true, // Will be added from session
   createdAt: true,
 }).extend({
   number: z.string().optional(),
@@ -75,6 +80,7 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 
 export const insertExpenseSchema = createInsertSchema(expenses).omit({
   id: true,
+  userId: true, // Will be added from session
   createdAt: true,
 }).extend({
   amount: z.string().min(1, "Tutar gereklidir"),
