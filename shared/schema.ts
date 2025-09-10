@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -43,6 +43,19 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  phone: text("phone").notNull(),
+  birthDay: integer("birth_day").notNull(), // 1-31
+  birthMonth: integer("birth_month").notNull(), // 1-12  
+  birthYear: integer("birth_year").notNull(), // yyyy
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -76,6 +89,25 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   date: z.string().optional(),
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  username: true, // Generated automatically
+  password: true, // Generated automatically
+}).extend({
+  firstName: z.string().min(1, "İsim gereklidir"),
+  lastName: z.string().min(1, "Soyisim gereklidir"),
+  phone: z.string().min(10, "Geçerli telefon numarası giriniz"),
+  birthDay: z.number().min(1).max(31),
+  birthMonth: z.number().min(1).max(12),
+  birthYear: z.number().min(1900).max(new Date().getFullYear()),
+});
+
+export const signInSchema = z.object({
+  username: z.string().min(1, "Kullanıcı adı gereklidir"),
+  password: z.string().min(1, "Şifre gereklidir"),
+});
+
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Invoice = typeof invoices.$inferSelect;
@@ -84,14 +116,6 @@ export type Expense = typeof expenses.$inferSelect;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
-
-export type User = {
-  id: string;
-  username: string;
-  password: string;
-};
-
-export type InsertUser = {
-  username: string;
-  password: string;
-};
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type SignInUser = z.infer<typeof signInSchema>;
