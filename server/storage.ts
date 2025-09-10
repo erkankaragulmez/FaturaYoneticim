@@ -6,6 +6,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  signInUser(username: string, password: string): Promise<User | undefined>;
 
   // Customers
   getCustomers(): Promise<Customer[]>;
@@ -64,8 +65,28 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id };
+    
+    // Generate username: firstName + first 3 letters of lastName
+    const username = insertUser.firstName + insertUser.lastName.substring(0, 3);
+    
+    // Generate password: birthDay birthMonth birthYear (e.g. "15 3 1990")
+    const password = `${insertUser.birthDay} ${insertUser.birthMonth} ${insertUser.birthYear}`;
+    
+    const user: User = { 
+      ...insertUser, 
+      id,
+      username,
+      password,
+      createdAt: new Date()
+    };
     this.users.set(id, user);
+    return user;
+  }
+
+  async signInUser(username: string, password: string): Promise<User | undefined> {
+    const user = Array.from(this.users.values()).find(
+      (user) => user.username === username && user.password === password,
+    );
     return user;
   }
 
@@ -85,7 +106,11 @@ export class MemStorage implements IStorage {
     const customer: Customer = { 
       ...insertCustomer, 
       id, 
-      createdAt: new Date() 
+      createdAt: new Date(),
+      company: insertCustomer.company || null,
+      phone: insertCustomer.phone || null,
+      email: insertCustomer.email || null,
+      address: insertCustomer.address || null
     };
     this.customers.set(id, customer);
     return customer;
@@ -161,6 +186,9 @@ export class MemStorage implements IStorage {
       number: invoiceNumber,
       amount: insertInvoice.amount,
       paidAmount: insertInvoice.paidAmount || "0",
+      status: insertInvoice.status || "unpaid",
+      description: insertInvoice.description || null,
+      customerId: insertInvoice.customerId || null,
       issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
       dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
       createdAt: new Date()
@@ -210,6 +238,7 @@ export class MemStorage implements IStorage {
     const expense: Expense = { 
       ...insertExpense,
       id,
+      description: insertExpense.description || null,
       date: insertExpense.date ? new Date(insertExpense.date) : new Date(),
       createdAt: new Date()
     };
@@ -252,6 +281,7 @@ export class MemStorage implements IStorage {
     const payment: Payment = { 
       ...insertPayment,
       id,
+      invoiceId: insertPayment.invoiceId || null,
       date: insertPayment.date ? new Date(insertPayment.date) : new Date(),
       createdAt: new Date()
     };

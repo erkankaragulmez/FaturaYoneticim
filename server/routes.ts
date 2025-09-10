@@ -1,10 +1,107 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema } from "@shared/schema";
+import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema, insertUserSchema, signInSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Authentication API
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      
+      // Check if username already exists (generated username = firstName + first 3 letters of lastName)
+      const existingUsername = validatedData.firstName + validatedData.lastName.substring(0, 3);
+      const existingUser = await storage.getUserByUsername(existingUsername);
+      
+      if (existingUser) {
+        return res.status(400).json({ 
+          error: "Bu isim ve soyisim kombinasyonu ile zaten bir kullanıcı kayıtlı",
+          generatedUsername: existingUsername
+        });
+      }
+      
+      const user = await storage.createUser(validatedData);
+      res.status(201).json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username
+        },
+        message: "Kayıt başarılı"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Geçersiz kullanıcı bilgileri", details: error.errors });
+      }
+      res.status(500).json({ error: "Kullanıcı kaydı başarısız" });
+    }
+  });
+
+  app.post("/api/auth/signin", async (req, res) => {
+    try {
+      const validatedData = signInSchema.parse(req.body);
+      const user = await storage.signInUser(validatedData.username, validatedData.password);
+      
+      if (!user) {
+        return res.status(401).json({ error: "Kullanıcı adı veya şifre hatalı" });
+      }
+      
+      // Store user in session
+      (req as any).session.userId = user.id;
+      
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username
+        },
+        message: "Giriş başarılı"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Geçersiz giriş bilgileri", details: error.errors });
+      }
+      res.status(500).json({ error: "Giriş başarısız" });
+    }
+  });
+
+  app.post("/api/auth/logout", async (req, res) => {
+    (req as any).session.destroy((err: any) => {
+      if (err) {
+        return res.status(500).json({ error: "Çıkış başarısız" });
+      }
+      res.json({ success: true, message: "Çıkış başarılı" });
+    });
+  });
+
+  app.get("/api/auth/user", async (req, res) => {
+    const userId = (req as any).session?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: "Giriş yapılmamış" });
+    }
+    
+    try {
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ error: "Kullanıcı bulunamadı" });
+      }
+      
+      res.json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Kullanıcı bilgileri alınamadı" });
+    }
+  });
   
   // Customers API
   app.get("/api/customers", async (req, res) => {
