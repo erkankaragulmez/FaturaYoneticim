@@ -9,32 +9,32 @@ export interface IStorage {
   signInUser(username: string): Promise<User | undefined>;
 
   // Customers
-  getCustomers(): Promise<Customer[]>;
-  getCustomer(id: string): Promise<Customer | undefined>;
-  createCustomer(customer: InsertCustomer): Promise<Customer>;
-  updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer>;
-  deleteCustomer(id: string): Promise<boolean>;
-  hasCustomerInvoices(customerId: string): Promise<boolean>;
+  getCustomers(userId: string): Promise<Customer[]>;
+  getCustomer(id: string, userId: string): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer, userId: string): Promise<Customer>;
+  updateCustomer(id: string, customer: Partial<InsertCustomer>, userId: string): Promise<Customer>;
+  deleteCustomer(id: string, userId: string): Promise<boolean>;
+  hasCustomerInvoices(customerId: string, userId: string): Promise<boolean>;
 
   // Invoices
-  getInvoices(): Promise<Invoice[]>;
-  getInvoice(id: string): Promise<Invoice | undefined>;
-  getInvoicesByCustomer(customerId: string): Promise<Invoice[]>;
-  createInvoice(invoice: InsertInvoice): Promise<Invoice>;
-  updateInvoice(id: string, invoice: Partial<InsertInvoice>): Promise<Invoice>;
-  deleteInvoice(id: string): Promise<boolean>;
+  getInvoices(userId: string): Promise<Invoice[]>;
+  getInvoice(id: string, userId: string): Promise<Invoice | undefined>;
+  getInvoicesByCustomer(customerId: string, userId: string): Promise<Invoice[]>;
+  createInvoice(invoice: InsertInvoice, userId: string): Promise<Invoice>;
+  updateInvoice(id: string, invoice: Partial<InsertInvoice>, userId: string): Promise<Invoice>;
+  deleteInvoice(id: string, userId: string): Promise<boolean>;
 
   // Expenses
-  getExpenses(): Promise<Expense[]>;
-  getExpense(id: string): Promise<Expense | undefined>;
-  createExpense(expense: InsertExpense): Promise<Expense>;
-  updateExpense(id: string, expense: Partial<InsertExpense>): Promise<Expense>;
-  deleteExpense(id: string): Promise<boolean>;
+  getExpenses(userId: string): Promise<Expense[]>;
+  getExpense(id: string, userId: string): Promise<Expense | undefined>;
+  createExpense(expense: InsertExpense, userId: string): Promise<Expense>;
+  updateExpense(id: string, expense: Partial<InsertExpense>, userId: string): Promise<Expense>;
+  deleteExpense(id: string, userId: string): Promise<boolean>;
 
   // Payments
-  getPayments(): Promise<Payment[]>;
-  getPaymentsByInvoice(invoiceId: string): Promise<Payment[]>;
-  createPayment(payment: InsertPayment): Promise<Payment>;
+  getPayments(userId: string): Promise<Payment[]>;
+  getPaymentsByInvoice(invoiceId: string, userId: string): Promise<Payment[]>;
+  createPayment(payment: InsertPayment, userId: string): Promise<Payment>;
 }
 
 export class MemStorage implements IStorage {
@@ -88,21 +88,25 @@ export class MemStorage implements IStorage {
   }
 
   // Customers
-  async getCustomers(): Promise<Customer[]> {
-    return Array.from(this.customers.values()).sort((a, b) => 
-      new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
-    );
+  async getCustomers(userId: string): Promise<Customer[]> {
+    return Array.from(this.customers.values())
+      .filter(customer => customer.userId === userId)
+      .sort((a, b) => 
+        new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
+      );
   }
 
-  async getCustomer(id: string): Promise<Customer | undefined> {
-    return this.customers.get(id);
+  async getCustomer(id: string, userId: string): Promise<Customer | undefined> {
+    const customer = this.customers.get(id);
+    return customer && customer.userId === userId ? customer : undefined;
   }
 
-  async createCustomer(insertCustomer: InsertCustomer): Promise<Customer> {
+  async createCustomer(insertCustomer: InsertCustomer, userId: string): Promise<Customer> {
     const id = randomUUID();
     const customer: Customer = { 
       ...insertCustomer, 
-      id, 
+      id,
+      userId,
       createdAt: new Date(),
       company: insertCustomer.company || null,
       phone: insertCustomer.phone || null,
@@ -113,23 +117,26 @@ export class MemStorage implements IStorage {
     return customer;
   }
 
-  async updateCustomer(id: string, updateData: Partial<InsertCustomer>): Promise<Customer> {
+  async updateCustomer(id: string, updateData: Partial<InsertCustomer>, userId: string): Promise<Customer> {
     const customer = this.customers.get(id);
-    if (!customer) throw new Error("Customer not found");
+    if (!customer || customer.userId !== userId) throw new Error("Customer not found");
     
     const updated = { ...customer, ...updateData };
     this.customers.set(id, updated);
     return updated;
   }
 
-  async hasCustomerInvoices(customerId: string): Promise<boolean> {
-    const customerInvoices = await this.getInvoicesByCustomer(customerId);
+  async hasCustomerInvoices(customerId: string, userId: string): Promise<boolean> {
+    const customerInvoices = await this.getInvoicesByCustomer(customerId, userId);
     return customerInvoices.length > 0;
   }
 
-  async deleteCustomer(id: string): Promise<boolean> {
+  async deleteCustomer(id: string, userId: string): Promise<boolean> {
+    const customer = this.customers.get(id);
+    if (!customer || customer.userId !== userId) throw new Error("Customer not found");
+    
     // Müşterinin faturası varsa silmeye izin verme
-    const hasInvoices = await this.hasCustomerInvoices(id);
+    const hasInvoices = await this.hasCustomerInvoices(id, userId);
     if (hasInvoices) {
       throw new Error("Bu müşteriyi silemezsiniz çünkü sistemde faturası bulunmaktadır");
     }
@@ -137,19 +144,22 @@ export class MemStorage implements IStorage {
   }
 
   // Invoices
-  async getInvoices(): Promise<Invoice[]> {
-    return Array.from(this.invoices.values()).sort((a, b) => 
-      new Date(b.issueDate!).getTime() - new Date(a.issueDate!).getTime()
-    );
-  }
-
-  async getInvoice(id: string): Promise<Invoice | undefined> {
-    return this.invoices.get(id);
-  }
-
-  async getInvoicesByCustomer(customerId: string): Promise<Invoice[]> {
+  async getInvoices(userId: string): Promise<Invoice[]> {
     return Array.from(this.invoices.values())
-      .filter(invoice => invoice.customerId === customerId)
+      .filter(invoice => invoice.userId === userId)
+      .sort((a, b) => 
+        new Date(b.issueDate!).getTime() - new Date(a.issueDate!).getTime()
+      );
+  }
+
+  async getInvoice(id: string, userId: string): Promise<Invoice | undefined> {
+    const invoice = this.invoices.get(id);
+    return invoice && invoice.userId === userId ? invoice : undefined;
+  }
+
+  async getInvoicesByCustomer(customerId: string, userId: string): Promise<Invoice[]> {
+    return Array.from(this.invoices.values())
+      .filter(invoice => invoice.customerId === customerId && invoice.userId === userId)
       .sort((a, b) => new Date(b.issueDate!).getTime() - new Date(a.issueDate!).getTime());
   }
 
@@ -173,13 +183,14 @@ export class MemStorage implements IStorage {
     return `${yearPrefix}${nextNumber.toString().padStart(3, '0')}`;
   }
 
-  async createInvoice(insertInvoice: InsertInvoice): Promise<Invoice> {
+  async createInvoice(insertInvoice: InsertInvoice, userId: string): Promise<Invoice> {
     const id = randomUUID();
     const invoiceNumber = insertInvoice.number || this.generateInvoiceNumber();
     
     const invoice: Invoice = { 
       ...insertInvoice,
       id,
+      userId,
       number: invoiceNumber,
       amount: insertInvoice.amount,
       paidAmount: insertInvoice.paidAmount || "0",
@@ -194,9 +205,9 @@ export class MemStorage implements IStorage {
     return invoice;
   }
 
-  async updateInvoice(id: string, updateData: Partial<InsertInvoice>): Promise<Invoice> {
+  async updateInvoice(id: string, updateData: Partial<InsertInvoice>, userId: string): Promise<Invoice> {
     const invoice = this.invoices.get(id);
-    if (!invoice) throw new Error("Invoice not found");
+    if (!invoice || invoice.userId !== userId) throw new Error("Invoice not found");
     
     const updated = { 
       ...invoice, 
@@ -208,9 +219,12 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async deleteInvoice(id: string): Promise<boolean> {
+  async deleteInvoice(id: string, userId: string): Promise<boolean> {
+    const invoice = this.invoices.get(id);
+    if (!invoice || invoice.userId !== userId) throw new Error("Invoice not found");
+    
     // Get all payments for this invoice and delete them first
-    const relatedPayments = await this.getPaymentsByInvoice(id);
+    const relatedPayments = await this.getPaymentsByInvoice(id, userId);
     relatedPayments.forEach(payment => {
       this.payments.delete(payment.id);
     });
@@ -220,21 +234,25 @@ export class MemStorage implements IStorage {
   }
 
   // Expenses
-  async getExpenses(): Promise<Expense[]> {
-    return Array.from(this.expenses.values()).sort((a, b) => 
-      new Date(b.date!).getTime() - new Date(a.date!).getTime()
-    );
+  async getExpenses(userId: string): Promise<Expense[]> {
+    return Array.from(this.expenses.values())
+      .filter(expense => expense.userId === userId)
+      .sort((a, b) => 
+        new Date(b.date!).getTime() - new Date(a.date!).getTime()
+      );
   }
 
-  async getExpense(id: string): Promise<Expense | undefined> {
-    return this.expenses.get(id);
+  async getExpense(id: string, userId: string): Promise<Expense | undefined> {
+    const expense = this.expenses.get(id);
+    return expense && expense.userId === userId ? expense : undefined;
   }
 
-  async createExpense(insertExpense: InsertExpense): Promise<Expense> {
+  async createExpense(insertExpense: InsertExpense, userId: string): Promise<Expense> {
     const id = randomUUID();
     const expense: Expense = { 
       ...insertExpense,
       id,
+      userId,
       description: insertExpense.description || null,
       date: insertExpense.date ? new Date(insertExpense.date) : new Date(),
       createdAt: new Date()
@@ -243,9 +261,9 @@ export class MemStorage implements IStorage {
     return expense;
   }
 
-  async updateExpense(id: string, updateData: Partial<InsertExpense>): Promise<Expense> {
+  async updateExpense(id: string, updateData: Partial<InsertExpense>, userId: string): Promise<Expense> {
     const expense = this.expenses.get(id);
-    if (!expense) throw new Error("Expense not found");
+    if (!expense || expense.userId !== userId) throw new Error("Expense not found");
     
     const updated = { 
       ...expense, 
@@ -256,24 +274,42 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async deleteExpense(id: string): Promise<boolean> {
+  async deleteExpense(id: string, userId: string): Promise<boolean> {
+    const expense = this.expenses.get(id);
+    if (!expense || expense.userId !== userId) throw new Error("Expense not found");
     return this.expenses.delete(id);
   }
 
   // Payments
-  async getPayments(): Promise<Payment[]> {
-    return Array.from(this.payments.values()).sort((a, b) => 
-      new Date(b.date!).getTime() - new Date(a.date!).getTime()
-    );
+  async getPayments(userId: string): Promise<Payment[]> {
+    return Array.from(this.payments.values())
+      .filter(payment => {
+        // Find the invoice this payment belongs to and check if it belongs to the user
+        const invoice = this.invoices.get(payment.invoiceId!);
+        return invoice && invoice.userId === userId;
+      })
+      .sort((a, b) => 
+        new Date(b.date!).getTime() - new Date(a.date!).getTime()
+      );
   }
 
-  async getPaymentsByInvoice(invoiceId: string): Promise<Payment[]> {
+  async getPaymentsByInvoice(invoiceId: string, userId: string): Promise<Payment[]> {
+    // Verify the invoice belongs to the user
+    const invoice = this.invoices.get(invoiceId);
+    if (!invoice || invoice.userId !== userId) return [];
+    
     return Array.from(this.payments.values())
       .filter(payment => payment.invoiceId === invoiceId)
       .sort((a, b) => new Date(b.date!).getTime() - new Date(a.date!).getTime());
   }
 
-  async createPayment(insertPayment: InsertPayment): Promise<Payment> {
+  async createPayment(insertPayment: InsertPayment, userId: string): Promise<Payment> {
+    // Verify the invoice belongs to the user
+    const invoice = this.invoices.get(insertPayment.invoiceId!);
+    if (!invoice || invoice.userId !== userId) {
+      throw new Error("Invoice not found or access denied");
+    }
+    
     const id = randomUUID();
     const payment: Payment = { 
       ...insertPayment,
