@@ -38,8 +38,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const signInForm = useForm<SignInUser>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      username: "",
-      password: ""
+      username: ""
     }
   });
 
@@ -59,9 +58,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       
       // Auto sign in after successful registration
       signInForm.setValue("username", data.user.username);
-      // Password is birthDay birthMonth birthYear format
-      const { birthDay, birthMonth, birthYear } = signUpForm.getValues();
-      signInForm.setValue("password", `${birthDay} ${birthMonth} ${birthYear}`);
     },
     onError: (error: any) => {
       toast({
@@ -89,7 +85,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     onError: (error: any) => {
       toast({
         title: "Giriş Hatası",
-        description: error.message || "Kullanıcı adı veya şifre hatalı",
+        description: error.message || "Kullanıcı adı hatalı",
         variant: "destructive",
       });
     }
@@ -177,24 +173,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     )}
                   />
 
-                  <FormField
-                    control={signInForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Şifre (Doğum Tarihi: gün ay yıl)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="password"
-                            placeholder="örn: 15 3 1990"
-                            data-testid="input-password"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
                   <Button 
                     type="submit" 
@@ -354,8 +332,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                   </div>
 
                   <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
-                    <strong>Bilgi:</strong> Kullanıcı adınız otomatik oluşturulacak (İsim + Soyisimin ilk 3 harfi). 
-                    Şifreniz doğum tarihiniz olacak (gün ay yıl formatında).
+                    <strong>Bilgi:</strong> Kullanıcı adınız otomatik oluşturulacak (İsim + Soyisimin ilk 3 harfi).
                   </div>
 
                   <Button 
