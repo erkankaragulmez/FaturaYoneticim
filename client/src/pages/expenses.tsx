@@ -21,7 +21,16 @@ export default function Expenses() {
   });
 
   const { data: categoryData = {} } = useQuery({
-    queryKey: ["/api/analytics/expenses-by-category", { month: currentMonth, year: currentYear }],
+    queryKey: ["/api/analytics/expenses-by-category", currentMonth, currentYear],
+    queryFn: async () => {
+      const response = await fetch(`/api/analytics/expenses-by-category?month=${currentMonth}&year=${currentYear}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch expense analytics');
+      }
+      return response.json();
+    },
   });
 
   const periodOptions = [
