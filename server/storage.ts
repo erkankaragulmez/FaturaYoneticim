@@ -1,6 +1,6 @@
 import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, customers, invoices, expenses, payments, users } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { drizzle } from "drizzle-orm/postgres-js";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -480,49 +480,86 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async createInvoice(insertInvoice: InsertInvoice, userId: string): Promise<Invoice> {
-    // Generate invoice number if not provided
-    let invoiceNumber = insertInvoice.number;
-    if (!invoiceNumber) {
-      const currentYear = new Date().getFullYear();
-      const yearPrefix = `FT-${currentYear}-`;
-      
-      // Get current year invoices count for this user
-      const currentYearInvoices = await this.db
-        .select({ number: invoices.number })
-        .from(invoices)
-        .where(
-          and(
-            eq(invoices.userId, userId),
-            sql`${invoices.number} LIKE ${yearPrefix + '%'}`
-          )
-        );
-      
-      // Extract numbers and find the max
-      const numbers = currentYearInvoices
-        .map(inv => {
-          const numberPart = inv.number?.split('-')[2];
-          return numberPart ? parseInt(numberPart, 10) : 0;
+    // If invoice number is provided, use it directly
+    if (insertInvoice.number) {
+      const result = await this.db
+        .insert(invoices)
+        .values({
+          ...insertInvoice,
+          userId,
+          number: insertInvoice.number,
+          paidAmount: insertInvoice.paidAmount || "0",
+          status: insertInvoice.status || "unpaid",
+          issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
+          dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
         })
-        .filter(num => !isNaN(num));
+        .returning();
       
-      const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
-      invoiceNumber = `${yearPrefix}${nextNumber.toString().padStart(3, '0')}`;
+      return result[0];
     }
 
-    const result = await this.db
-      .insert(invoices)
-      .values({
-        ...insertInvoice,
-        userId,
-        number: invoiceNumber,
-        paidAmount: insertInvoice.paidAmount || "0",
-        status: insertInvoice.status || "unpaid",
-        issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
-        dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
-      })
-      .returning();
+    // Generate sequential invoice numbers with retry mechanism to handle race conditions
+    const currentYear = new Date().getFullYear();
+    const yearPrefix = `FT-${currentYear}-`;
+    const maxRetries = 10;
     
-    return result[0];
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        // Get current max number for this user and year
+        const latestInvoice = await this.db
+          .select({ number: invoices.number })
+          .from(invoices)
+          .where(
+            and(
+              eq(invoices.userId, userId),
+              sql`${invoices.number} LIKE ${yearPrefix + '%'}`
+            )
+          )
+          .orderBy(sql`CAST(SUBSTRING(${invoices.number}, ${yearPrefix.length + 1}) AS INTEGER) DESC`)
+          .limit(1);
+        
+        // Calculate next number
+        let nextNumber = 1;
+        if (latestInvoice.length > 0) {
+          const numberPart = latestInvoice[0].number?.split('-')[2];
+          const currentNumber = numberPart ? parseInt(numberPart, 10) : 0;
+          nextNumber = currentNumber + 1;
+        }
+        
+        const invoiceNumber = `${yearPrefix}${nextNumber.toString().padStart(3, '0')}`;
+        
+        // Try to insert with this number
+        const result = await this.db
+          .insert(invoices)
+          .values({
+            ...insertInvoice,
+            userId,
+            number: invoiceNumber,
+            paidAmount: insertInvoice.paidAmount || "0",
+            status: insertInvoice.status || "unpaid",
+            issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
+            dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
+          })
+          .returning();
+        
+        return result[0];
+        
+      } catch (error: any) {
+        // If it's a unique constraint violation on our composite constraint, retry
+        if (error?.code === '23505' && error?.detail?.includes('user_invoice_number')) {
+          if (attempt === maxRetries - 1) {
+            throw new Error('Unable to generate unique invoice number after multiple attempts');
+          }
+          // Wait a small random amount before retrying to reduce contention
+          await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+          continue;
+        }
+        // If it's any other error, rethrow
+        throw error;
+      }
+    }
+    
+    throw new Error('Maximum retry attempts exceeded for invoice creation');
   }
 
   async updateInvoice(id: string, updateData: Partial<InsertInvoice>, userId: string): Promise<Invoice> {
@@ -546,7 +583,13 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async deleteInvoice(id: string, userId: string): Promise<boolean> {
-    // Delete related payments first
+    // First verify the invoice belongs to the user
+    const invoice = await this.getInvoice(id, userId);
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+
+    // Delete related payments first (now safe since we verified ownership)
     await this.db
       .delete(payments)
       .where(eq(payments.invoiceId, id));
@@ -648,12 +691,14 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async createPayment(insertPayment: InsertPayment, userId: string): Promise<Payment> {
-    // Verify the invoice belongs to the user
-    if (insertPayment.invoiceId) {
-      const invoice = await this.getInvoice(insertPayment.invoiceId, userId);
-      if (!invoice) {
-        throw new Error("Invoice not found or access denied");
-      }
+    // Verify invoiceId is provided and the invoice belongs to the user
+    if (!insertPayment.invoiceId) {
+      throw new Error("Invoice ID is required for payment creation");
+    }
+    
+    const invoice = await this.getInvoice(insertPayment.invoiceId, userId);
+    if (!invoice) {
+      throw new Error("Invoice not found or access denied");
     }
 
     const result = await this.db

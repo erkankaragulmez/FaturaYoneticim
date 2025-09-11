@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, decimal, timestamp, boolean, integer, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ export const customers = pgTable("customers", {
 export const invoices = pgTable("invoices", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  number: text("number").notNull().unique(),
+  number: text("number").notNull(),
   customerId: varchar("customer_id").references(() => customers.id),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0"),
@@ -26,7 +26,9 @@ export const invoices = pgTable("invoices", {
   issueDate: timestamp("issue_date").defaultNow(),
   dueDate: timestamp("due_date"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => ({
+  userInvoiceNumber: unique("user_invoice_number").on(table.userId, table.number),
+}));
 
 export const expenses = pgTable("expenses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -91,6 +93,7 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   id: true,
   createdAt: true,
 }).extend({
+  invoiceId: z.string().min(1, "Fatura seçimi zorunludur"),
   amount: z.string().min(1, "Tutar gereklidir"),
   date: z.string().optional(),
 });
