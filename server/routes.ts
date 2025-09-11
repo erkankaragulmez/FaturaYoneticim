@@ -21,8 +21,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertUserSchema.parse(req.body);
       
-      // Check if username already exists (generated username = firstName + first 3 letters of lastName)
-      const existingUsername = validatedData.firstName + validatedData.lastName.substring(0, 3);
+      // Check if username already exists (generated username = firstName + first 3 letters of lastName, lowercase, no spaces)
+      const existingUsername = (validatedData.firstName + validatedData.lastName.substring(0, 3)).toLowerCase().replace(/\s+/g, '');
       const existingUser = await storage.getUserByUsername(existingUsername);
       
       if (existingUser) {

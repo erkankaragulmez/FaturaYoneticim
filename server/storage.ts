@@ -58,16 +58,17 @@ export class MemStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
     return Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.username.toLowerCase().replace(/\s+/g, '') === normalizedUsername,
     );
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     
-    // Generate username: firstName + first 3 letters of lastName
-    const username = insertUser.firstName + insertUser.lastName.substring(0, 3);
+    // Generate username: firstName + first 3 letters of lastName (lowercase, no spaces)
+    const username = (insertUser.firstName + insertUser.lastName.substring(0, 3)).toLowerCase().replace(/\s+/g, '');
     
     const user: User = { 
       ...insertUser, 
@@ -81,8 +82,9 @@ export class MemStorage implements IStorage {
   }
 
   async signInUser(username: string): Promise<User | undefined> {
+    const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
     const user = Array.from(this.users.values()).find(
-      (user) => user.username === username,
+      (user) => user.username.toLowerCase().replace(/\s+/g, '') === normalizedUsername,
     );
     return user;
   }
