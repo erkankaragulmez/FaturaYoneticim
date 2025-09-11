@@ -1,5 +1,8 @@
-import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser } from "@shared/schema";
+import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, customers, invoices, expenses, payments, users } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { neon } from "@neondatabase/serverless";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -325,4 +328,345 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class PostgreSQLStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is required");
+    }
+    const connection = neon(process.env.DATABASE_URL);
+    this.db = drizzle(connection);
+  }
+
+  // Users
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(sql`LOWER(REPLACE(${users.username}, ' ', '')) = ${normalizedUsername}`)
+      .limit(1);
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    // Generate username: firstName + first 3 letters of lastName (lowercase, no spaces)
+    const username = (insertUser.firstName + insertUser.lastName.substring(0, 3))
+      .toLowerCase()
+      .replace(/\s+/g, '');
+    
+    const result = await this.db
+      .insert(users)
+      .values({
+        ...insertUser,
+        username,
+        password: "", // Not used anymore
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async signInUser(username: string): Promise<User | undefined> {
+    const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
+    const result = await this.db
+      .select()
+      .from(users)
+      .where(sql`LOWER(REPLACE(${users.username}, ' ', '')) = ${normalizedUsername}`)
+      .limit(1);
+    return result[0];
+  }
+
+  // Customers
+  async getCustomers(userId: string): Promise<Customer[]> {
+    return await this.db
+      .select()
+      .from(customers)
+      .where(eq(customers.userId, userId))
+      .orderBy(desc(customers.createdAt));
+  }
+
+  async getCustomer(id: string, userId: string): Promise<Customer | undefined> {
+    const result = await this.db
+      .select()
+      .from(customers)
+      .where(and(eq(customers.id, id), eq(customers.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async createCustomer(insertCustomer: InsertCustomer, userId: string): Promise<Customer> {
+    const result = await this.db
+      .insert(customers)
+      .values({
+        ...insertCustomer,
+        userId,
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateCustomer(id: string, updateData: Partial<InsertCustomer>, userId: string): Promise<Customer> {
+    const result = await this.db
+      .update(customers)
+      .set(updateData)
+      .where(and(eq(customers.id, id), eq(customers.userId, userId)))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error("Customer not found");
+    }
+    
+    return result[0];
+  }
+
+  async hasCustomerInvoices(customerId: string, userId: string): Promise<boolean> {
+    const customerInvoices = await this.getInvoicesByCustomer(customerId, userId);
+    return customerInvoices.length > 0;
+  }
+
+  async deleteCustomer(id: string, userId: string): Promise<boolean> {
+    // Check if customer has invoices
+    const hasInvoices = await this.hasCustomerInvoices(id, userId);
+    if (hasInvoices) {
+      throw new Error("Bu müşteriyi silemezsiniz çünkü sistemde faturası bulunmaktadır");
+    }
+
+    const result = await this.db
+      .delete(customers)
+      .where(and(eq(customers.id, id), eq(customers.userId, userId)))
+      .returning();
+    
+    return result.length > 0;
+  }
+
+  // Invoices
+  async getInvoices(userId: string): Promise<Invoice[]> {
+    return await this.db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(invoices.issueDate));
+  }
+
+  async getInvoice(id: string, userId: string): Promise<Invoice | undefined> {
+    const result = await this.db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async getInvoicesByCustomer(customerId: string, userId: string): Promise<Invoice[]> {
+    return await this.db
+      .select()
+      .from(invoices)
+      .where(and(eq(invoices.customerId, customerId), eq(invoices.userId, userId)))
+      .orderBy(desc(invoices.issueDate));
+  }
+
+  generateInvoiceNumber(userId: string): string {
+    // This will be replaced by a database query in the createInvoice method
+    const currentYear = new Date().getFullYear();
+    return `FT-${currentYear}-001`;
+  }
+
+  async createInvoice(insertInvoice: InsertInvoice, userId: string): Promise<Invoice> {
+    // Generate invoice number if not provided
+    let invoiceNumber = insertInvoice.number;
+    if (!invoiceNumber) {
+      const currentYear = new Date().getFullYear();
+      const yearPrefix = `FT-${currentYear}-`;
+      
+      // Get current year invoices count for this user
+      const currentYearInvoices = await this.db
+        .select({ number: invoices.number })
+        .from(invoices)
+        .where(
+          and(
+            eq(invoices.userId, userId),
+            sql`${invoices.number} LIKE ${yearPrefix + '%'}`
+          )
+        );
+      
+      // Extract numbers and find the max
+      const numbers = currentYearInvoices
+        .map(inv => {
+          const numberPart = inv.number?.split('-')[2];
+          return numberPart ? parseInt(numberPart, 10) : 0;
+        })
+        .filter(num => !isNaN(num));
+      
+      const nextNumber = numbers.length > 0 ? Math.max(...numbers) + 1 : 1;
+      invoiceNumber = `${yearPrefix}${nextNumber.toString().padStart(3, '0')}`;
+    }
+
+    const result = await this.db
+      .insert(invoices)
+      .values({
+        ...insertInvoice,
+        userId,
+        number: invoiceNumber,
+        paidAmount: insertInvoice.paidAmount || "0",
+        status: insertInvoice.status || "unpaid",
+        issueDate: insertInvoice.issueDate ? new Date(insertInvoice.issueDate) : new Date(),
+        dueDate: insertInvoice.dueDate ? new Date(insertInvoice.dueDate) : null,
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateInvoice(id: string, updateData: Partial<InsertInvoice>, userId: string): Promise<Invoice> {
+    const updateValues = {
+      ...updateData,
+      issueDate: updateData.issueDate ? new Date(updateData.issueDate) : undefined,
+      dueDate: updateData.dueDate ? new Date(updateData.dueDate) : undefined,
+    };
+
+    const result = await this.db
+      .update(invoices)
+      .set(updateValues)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error("Invoice not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteInvoice(id: string, userId: string): Promise<boolean> {
+    // Delete related payments first
+    await this.db
+      .delete(payments)
+      .where(eq(payments.invoiceId, id));
+
+    // Then delete the invoice
+    const result = await this.db
+      .delete(invoices)
+      .where(and(eq(invoices.id, id), eq(invoices.userId, userId)))
+      .returning();
+    
+    return result.length > 0;
+  }
+
+  // Expenses
+  async getExpenses(userId: string): Promise<Expense[]> {
+    return await this.db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.userId, userId))
+      .orderBy(desc(expenses.date));
+  }
+
+  async getExpense(id: string, userId: string): Promise<Expense | undefined> {
+    const result = await this.db
+      .select()
+      .from(expenses)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .limit(1);
+    return result[0];
+  }
+
+  async createExpense(insertExpense: InsertExpense, userId: string): Promise<Expense> {
+    const result = await this.db
+      .insert(expenses)
+      .values({
+        ...insertExpense,
+        userId,
+        date: insertExpense.date ? new Date(insertExpense.date) : new Date(),
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateExpense(id: string, updateData: Partial<InsertExpense>, userId: string): Promise<Expense> {
+    const updateValues = {
+      ...updateData,
+      date: updateData.date ? new Date(updateData.date) : undefined,
+    };
+
+    const result = await this.db
+      .update(expenses)
+      .set(updateValues)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .returning();
+    
+    if (result.length === 0) {
+      throw new Error("Expense not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteExpense(id: string, userId: string): Promise<boolean> {
+    const result = await this.db
+      .delete(expenses)
+      .where(and(eq(expenses.id, id), eq(expenses.userId, userId)))
+      .returning();
+    
+    return result.length > 0;
+  }
+
+  // Payments
+  async getPayments(userId: string): Promise<Payment[]> {
+    return await this.db
+      .select({
+        id: payments.id,
+        invoiceId: payments.invoiceId,
+        amount: payments.amount,
+        date: payments.date,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .innerJoin(invoices, eq(payments.invoiceId, invoices.id))
+      .where(eq(invoices.userId, userId))
+      .orderBy(desc(payments.date));
+  }
+
+  async getPaymentsByInvoice(invoiceId: string, userId: string): Promise<Payment[]> {
+    // Verify the invoice belongs to the user
+    const invoice = await this.getInvoice(invoiceId, userId);
+    if (!invoice) return [];
+
+    return await this.db
+      .select()
+      .from(payments)
+      .where(eq(payments.invoiceId, invoiceId))
+      .orderBy(desc(payments.date));
+  }
+
+  async createPayment(insertPayment: InsertPayment, userId: string): Promise<Payment> {
+    // Verify the invoice belongs to the user
+    if (insertPayment.invoiceId) {
+      const invoice = await this.getInvoice(insertPayment.invoiceId, userId);
+      if (!invoice) {
+        throw new Error("Invoice not found or access denied");
+      }
+    }
+
+    const result = await this.db
+      .insert(payments)
+      .values({
+        ...insertPayment,
+        date: insertPayment.date ? new Date(insertPayment.date) : new Date(),
+      })
+      .returning();
+    
+    return result[0];
+  }
+}
+
+// Switch to PostgreSQL storage
+export const storage = new PostgreSQLStorage();
