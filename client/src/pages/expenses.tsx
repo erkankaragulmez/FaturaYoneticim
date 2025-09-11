@@ -12,6 +12,8 @@ export default function Expenses() {
   const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
@@ -168,7 +170,15 @@ export default function Expenses() {
           </div>
         ) : (
           Object.entries(categoryData as Record<string, any>).map(([category, data]: [string, any]) => (
-            <div key={category} className="bg-white border border-border rounded-lg p-4 shadow-sm">
+            <div 
+              key={category} 
+              className="bg-white border border-border rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => {
+                setSelectedCategory(category);
+                setIsCategoryModalOpen(true);
+              }}
+              data-testid={`card-category-${category}`}
+            >
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-foreground flex items-center">
                   <i className={`${categoryIcons[category as keyof typeof categoryIcons] || categoryIcons.Diğer} mr-2 ${categoryColors[category as keyof typeof categoryColors] || categoryColors.Diğer}`}></i>
@@ -206,56 +216,77 @@ export default function Expenses() {
         </div>
       )}
 
-      {/* Recent Expenses List */}
-      {filteredExpenses.length > 0 && (
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-4">Bu Aydaki Masraflar</h3>
-          <div className="space-y-2">
-            {filteredExpenses.map((expense) => (
-              <div key={expense.id} className="bg-white border border-border rounded-lg p-3 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <i className={`${categoryIcons[expense.category as keyof typeof categoryIcons] || categoryIcons.Diğer} ${categoryColors[expense.category as keyof typeof categoryColors] || categoryColors.Diğer}`}></i>
-                      <span className="text-sm font-medium">{expense.category}</span>
+      {/* Category Details Modal */}
+      <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <i className={`${categoryIcons[selectedCategory as keyof typeof categoryIcons] || categoryIcons.Diğer} mr-2 ${categoryColors[selectedCategory as keyof typeof categoryColors] || categoryColors.Diğer}`}></i>
+              {selectedCategory} Masrafları
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {filteredExpenses
+              .filter(expense => expense.category === selectedCategory)
+              .map((expense) => (
+                <div key={expense.id} className="bg-white border border-border rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium">{expense.category}</span>
+                      </div>
+                      {expense.description && (
+                        <p className="text-xs text-muted-foreground mt-1" data-testid={`text-expense-description-${expense.id}`}>{expense.description}</p>
+                      )}
+                      {expense.date && (
+                        <p className="text-xs text-muted-foreground mt-1" data-testid={`text-expense-date-${expense.id}`}>
+                          {new Date(expense.date).toLocaleDateString('tr-TR')}
+                        </p>
+                      )}
                     </div>
-                    {expense.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{expense.description}</p>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{formatCurrency(parseFloat(expense.amount))}</div>
-                    <div className="grid grid-cols-2 gap-1 mt-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
-                        onClick={() => {
-                          setSelectedExpense(expense);
-                          setIsDialogOpen(true);
-                        }}
-                        data-testid={`button-edit-expense-${expense.id}`}
-                      >
-                        ✎
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
-                        onClick={() => deleteMutation.mutate(expense.id)}
-                        disabled={deleteMutation.isPending}
-                        data-testid={`button-delete-expense-${expense.id}`}
-                      >
-                        ✕
-                      </Button>
+                    <div className="text-right">
+                      <div className="text-sm font-medium" data-testid={`text-expense-amount-${expense.id}`}>{formatCurrency(parseFloat(expense.amount))}</div>
+                      <div className="grid grid-cols-2 gap-1 mt-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-2 min-w-8 h-8 text-gray-600 hover:text-gray-800 text-lg font-bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedExpense(expense);
+                            setIsCategoryModalOpen(false);
+                            setIsDialogOpen(true);
+                          }}
+                          data-testid={`button-edit-expense-${expense.id}`}
+                        >
+                          ✎
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteMutation.mutate(expense.id);
+                          }}
+                          disabled={deleteMutation.isPending}
+                          data-testid={`button-delete-expense-${expense.id}`}
+                        >
+                          ✕
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            {filteredExpenses.filter(expense => expense.category === selectedCategory).length === 0 && (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Bu kategoride masraf yok</p>
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
