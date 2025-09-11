@@ -59,10 +59,11 @@ export default function Expenses() {
     "Diğer": "text-gray-400"
   };
 
-  const totalExpenses = Object.values(categoryData).reduce((sum: number, cat: any) => sum + cat.total, 0);
+  const totalExpenses = Object.values(categoryData as Record<string, any>).reduce((sum: number, cat: any) => sum + cat.total, 0);
 
   // Filter expenses by selected month
   const filteredExpenses = expenses.filter((expense) => {
+    if (!expense.date) return false;
     const expenseDate = new Date(expense.date);
     return expenseDate.getMonth() + 1 === currentMonth && expenseDate.getFullYear() === currentYear;
   });
@@ -151,13 +152,13 @@ export default function Expenses() {
 
       {/* Expense Categories */}
       <div className="space-y-3">
-        {Object.keys(categoryData).length === 0 && filteredExpenses.length === 0 ? (
+        {Object.keys(categoryData as Record<string, any>).length === 0 && filteredExpenses.length === 0 ? (
           <div className="text-center py-8">
             <i className="fas fa-credit-card text-4xl text-muted-foreground mb-4"></i>
             <p className="text-muted-foreground">Bu dönemde masraf kaydı yok</p>
           </div>
         ) : (
-          Object.entries(categoryData).map(([category, data]: [string, any]) => (
+          Object.entries(categoryData as Record<string, any>).map(([category, data]: [string, any]) => (
             <div key={category} className="bg-white border border-border rounded-lg p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="font-medium text-foreground flex items-center">
@@ -176,16 +177,22 @@ export default function Expenses() {
         )}
       </div>
 
-      {/* Total Summary */}
+      {/* Total Summary - Made More Prominent */}
       {totalExpenses > 0 && (
-        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-orange-700 font-medium">
-              Toplam Masraf ({periodOptions.find(p => p.value === selectedPeriod)?.label.split(" ")[0]})
-            </span>
-            <span className="text-xl font-bold text-orange-600" data-testid="text-monthly-expense-total">
+        <div className="mt-6 mb-6 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl p-6 shadow-lg">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <i className="fas fa-chart-line text-2xl mr-2"></i>
+              <span className="text-lg font-semibold">
+                Aylık Toplam Masraf
+              </span>
+            </div>
+            <div className="text-sm opacity-90 mb-3">
+              {periodOptions.find(p => p.value === selectedPeriod)?.label}
+            </div>
+            <div className="text-3xl font-bold" data-testid="text-monthly-expense-total">
               {formatCurrency(totalExpenses)}
-            </span>
+            </div>
           </div>
         </div>
       )}
