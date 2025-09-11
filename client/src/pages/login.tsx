@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { insertUserSchema, signInSchema, type InsertUser, type SignInUser } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface LoginProps {
   onLoginSuccess: () => void;
@@ -20,6 +21,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   // Sign Up Form
   const signUpForm = useForm<InsertUser>({
@@ -82,6 +84,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       // Set user data in cache and invalidate to trigger refetch
       queryClient.setQueryData(["/api/auth/user"], data.user);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Redirect to dashboard after successful login
+      setLocation("/");
       onLoginSuccess();
     },
     onError: (error: any) => {
