@@ -44,10 +44,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Kayıt başarılı"
       });
     } catch (error) {
+      console.error("Signup error:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Geçersiz kullanıcı bilgileri", details: error.errors });
       }
-      res.status(500).json({ error: "Kullanıcı kaydı başarısız" });
+      res.status(500).json({ error: "Kullanıcı kaydı başarısız", details: (error as any)?.message || String(error) });
     }
   });
 

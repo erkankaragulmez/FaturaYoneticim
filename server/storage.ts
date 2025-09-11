@@ -1,6 +1,6 @@
 import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, customers, invoices, expenses, payments, users } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { drizzle } from "drizzle-orm/neon-serverless";
+import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, sql } from "drizzle-orm";
 
@@ -335,8 +335,8 @@ export class PostgreSQLStorage implements IStorage {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL environment variable is required");
     }
-    const connection = neon(process.env.DATABASE_URL);
-    this.db = drizzle(connection);
+    const sql = neon(process.env.DATABASE_URL);
+    this.db = drizzle(sql);
   }
 
   // Users
