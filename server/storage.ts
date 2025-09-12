@@ -531,7 +531,7 @@ export class PostgreSQLStorage implements IStorage {
               sql`${invoices.number} LIKE ${yearPrefix + '%'}`
             )
           )
-          .orderBy(sql`CAST(SUBSTRING(${invoices.number}, ${yearPrefix.length + 1}) AS INTEGER) DESC`)
+          .orderBy(sql`CAST(SUBSTRING(${invoices.number}, 9) AS INTEGER) DESC`)
           .limit(1);
         
         // Calculate next number
