@@ -480,6 +480,14 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async createInvoice(insertInvoice: InsertInvoice, userId: string): Promise<Invoice> {
+    // Validate customer exists and belongs to user
+    if (insertInvoice.customerId) {
+      const customer = await this.getCustomer(insertInvoice.customerId, userId);
+      if (!customer) {
+        throw new Error("Seçilen müşteri bulunamadı");
+      }
+    }
+
     // If invoice number is provided, use it directly
     if (insertInvoice.number) {
       const result = await this.db
@@ -496,6 +504,14 @@ export class PostgreSQLStorage implements IStorage {
         .returning();
       
       return result[0];
+    }
+
+    // Validate customer exists and belongs to user (once before attempting generation)
+    if (insertInvoice.customerId) {
+      const customer = await this.getCustomer(insertInvoice.customerId, userId);
+      if (!customer) {
+        throw new Error("Seçilen müşteri bulunamadı");
+      }
     }
 
     // Generate sequential invoice numbers with retry mechanism to handle race conditions
@@ -521,7 +537,8 @@ export class PostgreSQLStorage implements IStorage {
         // Calculate next number
         let nextNumber = 1;
         if (latestInvoice.length > 0) {
-          const numberPart = latestInvoice[0].number?.split('-')[2];
+          const latestNumber = latestInvoice[0].number;
+          const numberPart = latestNumber?.split('-')[2];
           const currentNumber = numberPart ? parseInt(numberPart, 10) : 0;
           nextNumber = currentNumber + 1;
         }

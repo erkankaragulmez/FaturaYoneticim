@@ -211,10 +211,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoice = await storage.createInvoice(validatedData, req.userId);
       res.status(201).json(invoice);
     } catch (error) {
+      console.error("Invoice creation error:", error);
+      
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Invalid invoice data", details: error.errors });
+        return res.status(400).json({ error: "Geçersiz fatura verisi", details: error.errors });
       }
-      res.status(500).json({ error: "Failed to create invoice" });
+      
+      // Enhanced error messages for specific database errors
+      if (error instanceof Error) {
+        if (error.message.includes('Unable to generate unique invoice number')) {
+          return res.status(500).json({ error: "Fatura numarası oluşturulurken hata oluştu, lütfen tekrar deneyin" });
+        }
+        if (error.message.includes('Seçilen müşteri bulunamadı')) {
+          return res.status(400).json({ error: error.message });
+        }
+        if (error.message.includes('foreign key')) {
+          return res.status(400).json({ error: "Seçilen müşteri bulunamadı" });
+        }
+        // Log detailed error but return generic message for security
+        console.error("Detailed invoice creation error:", error.message);
+        return res.status(500).json({ error: "Fatura oluşturulurken hata oluştu, lütfen tekrar deneyin" });
+      }
+      
+      res.status(500).json({ error: "Fatura oluşturulurken beklenmeyen bir hata oluştu" });
     }
   });
 

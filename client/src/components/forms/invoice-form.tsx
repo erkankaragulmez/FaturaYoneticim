@@ -60,10 +60,21 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       });
       onSuccess();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Invoice save error:", error);
+      let errorMessage = "Fatura kaydedilemedi";
+      
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.details) {
+        // Validation errors
+        const validationErrors = error.details.map((err: any) => `${err.path?.join('.')}: ${err.message}`).join(', ');
+        errorMessage = `Doğrulama hatası: ${validationErrors}`;
+      }
+      
       toast({
         title: "Hata",
-        description: "Fatura kaydedilemedi",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -94,21 +105,28 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
 
       <div className="space-y-2">
         <Label htmlFor="customerId">Müşteri *</Label>
-        <Select
-          value={form.watch("customerId") || ""}
-          onValueChange={(value) => form.setValue("customerId", value)}
-        >
-          <SelectTrigger data-testid="select-invoice-customer">
-            <SelectValue placeholder="Müşteri seçin" />
-          </SelectTrigger>
-          <SelectContent>
-            {customers.map((customer) => (
-              <SelectItem key={customer.id} value={customer.id}>
-                {customer.name} {customer.company && `- ${customer.company}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {customers.length === 0 ? (
+          <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
+            <p className="text-sm text-gray-600 mb-2">Henüz müşteri eklememişsiniz</p>
+            <p className="text-xs text-gray-500">Fatura oluşturmak için önce bir müşteri eklemeniz gerekiyor</p>
+          </div>
+        ) : (
+          <Select
+            value={form.watch("customerId") || ""}
+            onValueChange={(value) => form.setValue("customerId", value)}
+          >
+            <SelectTrigger data-testid="select-invoice-customer">
+              <SelectValue placeholder="Müşteri seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {customers.map((customer) => (
+                <SelectItem key={customer.id} value={customer.id}>
+                  {customer.name} {customer.company && `- ${customer.company}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         {form.formState.errors.customerId && (
           <p className="text-sm text-red-600">{form.formState.errors.customerId.message}</p>
         )}
@@ -163,7 +181,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       <div className="flex space-x-2 pt-4">
         <Button
           type="submit"
-          disabled={mutation.isPending}
+          disabled={mutation.isPending || customers.length === 0}
           className="flex-1"
           data-testid="button-save-invoice"
         >
