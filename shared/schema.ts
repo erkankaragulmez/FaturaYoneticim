@@ -61,6 +61,19 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const devices = pgTable("devices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  deviceFingerprint: text("device_fingerprint").notNull(),
+  deviceLabel: text("device_label").notNull(),
+  userAgent: text("user_agent"),
+  isActive: boolean("is_active").default(true),
+  lastSeenAt: timestamp("last_seen_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userDeviceFingerprint: unique("user_device_fingerprint").on(table.userId, table.deviceFingerprint),
+}));
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   userId: true, // Will be added from session
@@ -121,6 +134,18 @@ export const insertUserSchema = createInsertSchema(users).omit({
   birthYear: z.number().min(1900).max(new Date().getFullYear()),
 });
 
+export const insertDeviceSchema = createInsertSchema(devices).omit({
+  id: true,
+  userId: true, // Will be added from session
+  isActive: true,
+  lastSeenAt: true,
+  createdAt: true,
+}).extend({
+  deviceFingerprint: z.string().min(1, "Cihaz kimliği gereklidir"),
+  deviceLabel: z.string().min(1, "Cihaz etiketi gereklidir"),
+  userAgent: z.string().optional(),
+});
+
 export const signInSchema = z.object({
   username: z.string().min(1, "Kullanıcı adı gereklidir"),
 });
@@ -135,4 +160,6 @@ export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = z.infer<typeof insertPaymentSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Device = typeof devices.$inferSelect;
+export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export type SignInUser = z.infer<typeof signInSchema>;
