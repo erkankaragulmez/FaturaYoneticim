@@ -53,9 +53,6 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   phone: text("phone").notNull(),
-  birthDay: integer("birth_day").notNull(), // 1-31
-  birthMonth: integer("birth_month").notNull(), // 1-12  
-  birthYear: integer("birth_year").notNull(), // yyyy
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -112,19 +109,17 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   username: true, // Generated automatically
-  password: true, // Generated automatically
 }).extend({
   firstName: z.string().min(1, "İsim gereklidir"),
   lastName: z.string().min(1, "Soyisim gereklidir"),
   phone: z.string().min(10, "Geçerli telefon numarası giriniz"),
-  birthDay: z.number().min(1).max(31),
-  birthMonth: z.number().min(1).max(12),
-  birthYear: z.number().min(1900).max(new Date().getFullYear()),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır"),
 });
 
 
 export const signInSchema = z.object({
   username: z.string().min(1, "Kullanıcı adı gereklidir"),
+  password: z.string().min(1, "Şifre gereklidir"),
 });
 
 export type Customer = typeof customers.$inferSelect;
