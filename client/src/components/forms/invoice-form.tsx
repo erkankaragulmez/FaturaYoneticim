@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { insertInvoiceSchema, type Invoice, type InsertInvoice, type Customer } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import QrFieldMappingConfig, { type QrFieldMapping } from "@/components/qr/qr-field-mapping";
+import QrScreenScanner from "@/components/qr/qr-screen-scanner";
+import { parseQrCode, formatAmount, formatDate } from "@/utils/qr-parser";
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
@@ -19,6 +22,17 @@ interface InvoiceFormProps {
 
 export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFormProps) {
   const { toast } = useToast();
+  
+  // QR scanning state
+  const [qrFieldMapping, setQrFieldMapping] = useState<QrFieldMapping>({
+    customerId: true,
+    amount: true,
+    issueDate: false,
+    dueDate: false,
+    description: true
+  });
+  const [isQrScannerOpen, setIsQrScannerOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   
   const form = useForm<InsertInvoice>({
     resolver: zodResolver(insertInvoiceSchema),
@@ -84,8 +98,113 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
     mutation.mutate(data);
   };
 
+  // QR code scanning handlers
+  const handleStartQrScan = () => {
+    setIsScanning(true);
+    setIsQrScannerOpen(true);
+  };
+
+  const handleQrScanComplete = (qrData: string) => {
+    setIsScanning(false);
+    setIsQrScannerOpen(false);
+    
+    const parseResult = parseQrCode(qrData);
+    
+    if (!parseResult.success) {
+      toast({
+        title: "QR Kod Hatası",
+        description: parseResult.error || "QR kod okunamadı",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Apply field mapping and populate form
+    const data = parseResult.data!;
+    let fieldsUpdated = 0;
+
+    if (qrFieldMapping.customerId && (data.customerName || data.companyName)) {
+      const customerName = data.customerName || data.companyName;
+      // Find matching customer
+      const matchingCustomer = customers.find(c => 
+        c.name.toLowerCase().includes(customerName!.toLowerCase()) ||
+        (c.company && c.company.toLowerCase().includes(customerName!.toLowerCase()))
+      );
+      
+      if (matchingCustomer) {
+        form.setValue("customerId", matchingCustomer.id);
+        fieldsUpdated++;
+      }
+    }
+
+    if (qrFieldMapping.amount && data.amount) {
+      const formattedAmount = formatAmount(data.amount);
+      if (formattedAmount) {
+        form.setValue("amount", formattedAmount);
+        fieldsUpdated++;
+      }
+    }
+
+    if (qrFieldMapping.description && data.description) {
+      form.setValue("description", data.description);
+      fieldsUpdated++;
+    }
+
+    if (qrFieldMapping.issueDate && data.issueDate) {
+      const formattedDate = formatDate(data.issueDate);
+      if (formattedDate) {
+        form.setValue("issueDate", formattedDate);
+        fieldsUpdated++;
+      }
+    }
+
+    if (qrFieldMapping.dueDate && data.dueDate) {
+      const formattedDate = formatDate(data.dueDate);
+      if (formattedDate) {
+        form.setValue("dueDate", formattedDate);
+        fieldsUpdated++;
+      }
+    }
+
+    toast({
+      title: "QR Kod Başarıyla Okundu",
+      description: `${fieldsUpdated} alan dolduruldu. Format: ${parseResult.format}`,
+    });
+  };
+
+  const handleQrScanCancel = () => {
+    setIsScanning(false);
+    setIsQrScannerOpen(false);
+  };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <div className="space-y-4">
+      {/* QR Code Scanning Section */}
+      {!invoice && (
+        <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-blue-900 dark:text-blue-100">QR Kod ile Otomatik Doldur</h3>
+          </div>
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+            Fatura QR kodunu ekrandan tarayarak formu otomatik olarak doldurabilirsiniz.
+          </p>
+          <QrFieldMappingConfig
+            mapping={qrFieldMapping}
+            onMappingChange={setQrFieldMapping}
+            onStartScan={handleStartQrScan}
+            isScanning={isScanning}
+          />
+        </div>
+      )}
+
+      {/* QR Scanner Modal */}
+      <QrScreenScanner
+        isOpen={isQrScannerOpen}
+        onClose={handleQrScanCancel}
+        onQrDetected={handleQrScanComplete}
+      />
+
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="number">Fatura No</Label>
         <Input
@@ -188,6 +307,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
           {mutation.isPending ? "Kaydediliyor..." : invoice ? "Güncelle" : "Kaydet"}
         </Button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }
