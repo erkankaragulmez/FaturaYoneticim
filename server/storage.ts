@@ -1,15 +1,28 @@
 import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, customers, invoices, expenses, payments, users } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash, pbkdf2Sync } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, sql } from "drizzle-orm";
+
+// Password hashing utilities
+function hashPassword(password: string): string {
+  const salt = randomUUID();
+  const hashedPassword = pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return `${salt}:${hashedPassword}`;
+}
+
+function verifyPassword(password: string, hash: string): boolean {
+  const [salt, storedHash] = hash.split(':');
+  const testHash = pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+  return storedHash === testHash;
+}
 
 export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  signInUser(username: string): Promise<User | undefined>;
+  signInUser(username: string, password: string): Promise<User | undefined>;
 
   // Customers
   getCustomers(userId: string): Promise<Customer[]>;
@@ -74,22 +87,30 @@ export class MemStorage implements IStorage {
     // Generate username: firstName + first 3 letters of lastName (lowercase, no spaces)
     const username = (insertUser.firstName + insertUser.lastName.substring(0, 3)).toLowerCase().replace(/\s+/g, '');
     
+    // Hash the password
+    const hashedPassword = hashPassword(insertUser.password);
+    
     const user: User = { 
       ...insertUser, 
       id,
       username,
-      password: "", // Not used anymore
+      password: hashedPassword,
       createdAt: new Date()
     };
     this.users.set(id, user);
     return user;
   }
 
-  async signInUser(username: string): Promise<User | undefined> {
+  async signInUser(username: string, password: string): Promise<User | undefined> {
     const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
     const user = Array.from(this.users.values()).find(
       (user) => user.username.toLowerCase().replace(/\s+/g, '') === normalizedUsername,
     );
+    
+    if (!user || !verifyPassword(password, user.password)) {
+      return undefined;
+    }
+    
     return user;
   }
 
@@ -363,26 +384,35 @@ export class PostgreSQLStorage implements IStorage {
       .toLowerCase()
       .replace(/\s+/g, '');
     
+    // Hash the password
+    const hashedPassword = hashPassword(insertUser.password);
+    
     const result = await this.db
       .insert(users)
       .values({
         ...insertUser,
         username,
-        password: "", // Not used anymore
+        password: hashedPassword,
       })
       .returning();
     
     return result[0];
   }
 
-  async signInUser(username: string): Promise<User | undefined> {
+  async signInUser(username: string, password: string): Promise<User | undefined> {
     const normalizedUsername = username.toLowerCase().replace(/\s+/g, '');
     const result = await this.db
       .select()
       .from(users)
       .where(sql`LOWER(REPLACE(${users.username}, ' ', '')) = ${normalizedUsername}`)
       .limit(1);
-    return result[0];
+    
+    const user = result[0];
+    if (!user || !verifyPassword(password, user.password)) {
+      return undefined;
+    }
+    
+    return user;
   }
 
   // Customers
