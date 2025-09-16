@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema, insertUserSchema, signInSchema } from "@shared/schema";
+import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema, insertUserSchema, insertDeviceSchema, signInSchema } from "@shared/schema";
 import { z } from "zod";
 
 // Authentication middleware to extract userId from session
@@ -12,6 +12,50 @@ function requireAuth(req: any, res: any, next: any) {
   }
   req.userId = userId;
   next();
+}
+
+// Device fingerprinting utility
+function generateDeviceFingerprint(req: any): string {
+  const userAgent = req.headers['user-agent'] || '';
+  const acceptLanguage = req.headers['accept-language'] || '';
+  const acceptEncoding = req.headers['accept-encoding'] || '';
+  const ip = req.ip || req.connection.remoteAddress || '';
+  
+  // Create a simple fingerprint from available headers
+  const fingerprint = Buffer.from(
+    userAgent + acceptLanguage + acceptEncoding + ip
+  ).toString('base64');
+  
+  return fingerprint;
+}
+
+// Enhanced authentication middleware that checks device registration
+async function requireDeviceAuth(req: any, res: any, next: any) {
+  const userId = req.session?.userId;
+  if (!userId) {
+    return res.status(401).json({ error: "Giriş yapılmamış" });
+  }
+  
+  try {
+    const deviceFingerprint = generateDeviceFingerprint(req);
+    const device = await storage.getDeviceByFingerprint(deviceFingerprint, userId);
+    
+    if (!device) {
+      return res.status(403).json({ 
+        error: "Bu cihaz tanımlı değil",
+        requiresDeviceRegistration: true 
+      });
+    }
+    
+    // Update device last seen
+    await storage.updateDeviceLastSeen(device.id, userId);
+    
+    req.userId = userId;
+    req.deviceId = device.id;
+    next();
+  } catch (error) {
+    res.status(500).json({ error: "Cihaz doğrulama hatası" });
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -33,6 +77,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const user = await storage.createUser(validatedData);
+      
+      // Automatically register the device during signup
+      try {
+        const deviceFingerprint = generateDeviceFingerprint(req);
+        const userAgent = req.headers['user-agent'] || '';
+        
+        const deviceData = {
+          deviceFingerprint,
+          deviceLabel: `İlk Cihaz ${new Date().toLocaleDateString('tr-TR')}`,
+          userAgent
+        };
+        
+        const validatedDeviceData = insertDeviceSchema.parse(deviceData);
+        await storage.createDevice(validatedDeviceData, user.id);
+      } catch (deviceError) {
+        console.error("Device registration during signup failed:", deviceError);
+        // Don't fail the signup if device registration fails
+      }
+      
       res.status(201).json({ 
         success: true, 
         user: {
@@ -61,6 +124,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Kullanıcı adı hatalı" });
       }
       
+      // Check device registration
+      const deviceFingerprint = generateDeviceFingerprint(req);
+      const device = await storage.getDeviceByFingerprint(deviceFingerprint, user.id);
+      
+      if (!device) {
+        return res.status(403).json({ 
+          error: "Bu cihaz tanımlı değil. Lütfen kayıt olduğunuz cihazdan giriş yapın.",
+          requiresDeviceRegistration: true,
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            username: user.username
+          }
+        });
+      }
+      
       // Store user in session and save explicitly
       (req as any).session.userId = user.id;
       (req as any).session.save((err: any) => {
@@ -69,6 +149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(500).json({ error: "Oturum hatası" });
         }
         
+        // Update device last seen
+        storage.updateDeviceLastSeen(device.id, user.id).catch(console.error);
+        
         res.json({ 
           success: true, 
           user: {
@@ -76,6 +159,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             firstName: user.firstName,
             lastName: user.lastName,
             username: user.username
+          },
+          device: {
+            id: device.id,
+            label: device.deviceLabel
           },
           message: "Giriş başarılı"
         });
@@ -117,6 +204,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Kullanıcı bilgileri alınamadı" });
+    }
+  });
+
+  // Device Authentication API
+  app.post("/api/auth/register-device", requireAuth, async (req: any, res) => {
+    try {
+      const deviceFingerprint = generateDeviceFingerprint(req);
+      const userAgent = req.headers['user-agent'] || '';
+      
+      // Check if device is already registered
+      const existingDevice = await storage.getDeviceByFingerprint(deviceFingerprint, req.userId);
+      if (existingDevice) {
+        return res.json({ 
+          success: true, 
+          device: existingDevice,
+          message: "Cihaz zaten kayıtlı" 
+        });
+      }
+      
+      // Create new device registration
+      const deviceData = {
+        deviceFingerprint,
+        deviceLabel: req.body.deviceLabel || `Cihaz ${new Date().toLocaleDateString('tr-TR')}`,
+        userAgent
+      };
+      
+      const validatedData = insertDeviceSchema.parse(deviceData);
+      const device = await storage.createDevice(validatedData, req.userId);
+      
+      res.status(201).json({ 
+        success: true, 
+        device,
+        message: "Cihaz başarıyla kaydedildi" 
+      });
+    } catch (error) {
+      console.error("Device registration error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Geçersiz cihaz bilgileri", details: error.errors });
+      }
+      res.status(500).json({ error: "Cihaz kaydı başarısız" });
+    }
+  });
+
+  app.get("/api/auth/check-device", requireAuth, async (req: any, res) => {
+    try {
+      const deviceFingerprint = generateDeviceFingerprint(req);
+      const device = await storage.getDeviceByFingerprint(deviceFingerprint, req.userId);
+      
+      res.json({ 
+        isRegistered: !!device,
+        device: device || null 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Cihaz kontrolü başarısız" });
+    }
+  });
+
+  app.get("/api/auth/devices", requireAuth, async (req: any, res) => {
+    try {
+      const devices = await storage.getDevices(req.userId);
+      res.json(devices);
+    } catch (error) {
+      res.status(500).json({ error: "Cihazlar alınamadı" });
+    }
+  });
+
+  app.post("/api/auth/deactivate-device/:deviceId", requireAuth, async (req: any, res) => {
+    try {
+      const success = await storage.deactivateDevice(req.params.deviceId, req.userId);
+      if (!success) {
+        return res.status(404).json({ error: "Cihaz bulunamadı" });
+      }
+      res.json({ success: true, message: "Cihaz devre dışı bırakıldı" });
+    } catch (error) {
+      res.status(500).json({ error: "Cihaz devre dışı bırakılamadı" });
     }
   });
   
