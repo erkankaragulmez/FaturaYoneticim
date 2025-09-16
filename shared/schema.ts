@@ -74,7 +74,10 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
 }).extend({
   number: z.string().optional(),
   customerId: z.string().min(1, "Müşteri seçimi zorunludur"),
-  amount: z.string().min(1, "Tutar gereklidir"),
+  amount: z.string().min(1, "Tutar gereklidir").refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, "Pozitif bir değer girmeniz gerekiyor"),
   paidAmount: z.string().optional(),
   issueDate: z.string().optional(),
   dueDate: z.string().optional(),
@@ -85,7 +88,10 @@ export const insertExpenseSchema = createInsertSchema(expenses).omit({
   userId: true, // Will be added from session
   createdAt: true,
 }).extend({
-  amount: z.string().min(1, "Tutar gereklidir"),
+  amount: z.string().min(1, "Tutar gereklidir").refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, "Pozitif bir değer girmeniz gerekiyor"),
   date: z.string().optional(),
 });
 
@@ -94,7 +100,10 @@ export const insertPaymentSchema = createInsertSchema(payments).omit({
   createdAt: true,
 }).extend({
   invoiceId: z.string().min(1, "Fatura seçimi zorunludur"),
-  amount: z.string().min(1, "Tutar gereklidir"),
+  amount: z.string().min(1, "Tutar gereklidir").refine((val) => {
+    const num = parseFloat(val);
+    return !isNaN(num) && num > 0;
+  }, "Pozitif bir değer girmeniz gerekiyor"),
   date: z.string().optional(),
 });
 
