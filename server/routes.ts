@@ -57,10 +57,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signin", async (req, res) => {
     try {
       const validatedData = signInSchema.parse(req.body);
-      const user = await storage.signInUser(validatedData.username);
+      const user = await storage.signInUser(validatedData.username, validatedData.password);
       
       if (!user) {
-        return res.status(401).json({ error: "Kullanıcı adı hatalı" });
+        return res.status(401).json({ error: "Kullanıcı adı veya şifre hatalı" });
       }
       
       // Store user in session and save explicitly
