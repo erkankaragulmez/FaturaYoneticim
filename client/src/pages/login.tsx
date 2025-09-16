@@ -30,9 +30,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       firstName: "",
       lastName: "",
       phone: "",
-      birthDay: 1,
-      birthMonth: 1,
-      birthYear: 2000
+      password: ""
     }
   });
 
@@ -40,7 +38,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const signInForm = useForm<SignInUser>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      username: ""
+      username: "",
+      password: ""
     }
   });
 
@@ -105,29 +104,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     signInMutation.mutate(data);
   };
 
-  const generateDayOptions = () => {
-    return Array.from({ length: 31 }, (_, i) => i + 1);
-  };
-
-  const generateYearOptions = () => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: 100 }, (_, i) => currentYear - i);
-  };
-
-  const months = [
-    { value: 1, label: "Ocak" },
-    { value: 2, label: "Şubat" },
-    { value: 3, label: "Mart" },
-    { value: 4, label: "Nisan" },
-    { value: 5, label: "Mayıs" },
-    { value: 6, label: "Haziran" },
-    { value: 7, label: "Temmuz" },
-    { value: 8, label: "Ağustos" },
-    { value: 9, label: "Eylül" },
-    { value: 10, label: "Ekim" },
-    { value: 11, label: "Kasım" },
-    { value: 12, label: "Aralık" }
-  ];
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -179,6 +155,24 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     )}
                   />
 
+                  <FormField
+                    control={signInForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Şifre</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password"
+                            placeholder="Şifrenizi giriniz"
+                            data-testid="input-password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <Button 
                     type="submit" 
@@ -251,91 +245,24 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     )}
                   />
 
-                  <div className="space-y-2">
-                    <FormLabel>Doğum Tarihi</FormLabel>
-                    <div className="grid grid-cols-3 gap-2">
-                      <FormField
-                        control={signUpForm.control}
-                        name="birthDay"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select 
-                              value={field.value?.toString()} 
-                              onValueChange={(value) => field.onChange(parseInt(value))}
-                            >
-                              <FormControl>
-                                <SelectTrigger data-testid="select-day">
-                                  <SelectValue placeholder="Gün" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {generateDayOptions().map((day) => (
-                                  <SelectItem key={day} value={day.toString()}>
-                                    {day}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={signUpForm.control}
-                        name="birthMonth"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select 
-                              value={field.value?.toString()} 
-                              onValueChange={(value) => field.onChange(parseInt(value))}
-                            >
-                              <FormControl>
-                                <SelectTrigger data-testid="select-month">
-                                  <SelectValue placeholder="Ay" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {months.map((month) => (
-                                  <SelectItem key={month.value} value={month.value.toString()}>
-                                    {month.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={signUpForm.control}
-                        name="birthYear"
-                        render={({ field }) => (
-                          <FormItem>
-                            <Select 
-                              value={field.value?.toString()} 
-                              onValueChange={(value) => field.onChange(parseInt(value))}
-                            >
-                              <FormControl>
-                                <SelectTrigger data-testid="select-year">
-                                  <SelectValue placeholder="Yıl" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {generateYearOptions().map((year) => (
-                                  <SelectItem key={year} value={year.toString()}>
-                                    {year}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+                  <FormField
+                    control={signUpForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Şifre</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password"
+                            placeholder="Şifrenizi oluşturun"
+                            data-testid="input-signup-password"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
                     <strong>Bilgi:</strong> Kullanıcı adınız otomatik oluşturulacak (İsim + Soyisimin ilk 3 harfi).
