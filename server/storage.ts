@@ -1,4 +1,4 @@
-import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, type Device, type InsertDevice, customers, invoices, expenses, payments, users, devices } from "@shared/schema";
+import { type Customer, type InsertCustomer, type Invoice, type InsertInvoice, type Expense, type InsertExpense, type Payment, type InsertPayment, type User, type InsertUser, customers, invoices, expenses, payments, users } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
@@ -39,13 +39,6 @@ export interface IStorage {
   getPaymentsByInvoice(invoiceId: string, userId: string): Promise<Payment[]>;
   createPayment(payment: InsertPayment, userId: string): Promise<Payment>;
 
-  // Devices
-  getDevices(userId: string): Promise<Device[]>;
-  getDevice(id: string, userId: string): Promise<Device | undefined>;
-  getDeviceByFingerprint(fingerprint: string, userId: string): Promise<Device | undefined>;
-  createDevice(device: InsertDevice, userId: string): Promise<Device>;
-  updateDeviceLastSeen(deviceId: string, userId: string): Promise<boolean>;
-  deactivateDevice(deviceId: string, userId: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -54,7 +47,6 @@ export class MemStorage implements IStorage {
   private invoices: Map<string, Invoice>;
   private expenses: Map<string, Expense>;
   private payments: Map<string, Payment>;
-  private devices: Map<string, Device>;
 
   constructor() {
     this.users = new Map();
@@ -62,7 +54,6 @@ export class MemStorage implements IStorage {
     this.invoices = new Map();
     this.expenses = new Map();
     this.payments = new Map();
-    this.devices = new Map();
   }
 
   // Users
@@ -337,58 +328,6 @@ export class MemStorage implements IStorage {
     return payment;
   }
 
-  // Devices
-  async getDevices(userId: string): Promise<Device[]> {
-    return Array.from(this.devices.values())
-      .filter(device => device.userId === userId)
-      .sort((a, b) => 
-        new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime()
-      );
-  }
-
-  async getDevice(id: string, userId: string): Promise<Device | undefined> {
-    const device = this.devices.get(id);
-    return device && device.userId === userId ? device : undefined;
-  }
-
-  async getDeviceByFingerprint(fingerprint: string, userId: string): Promise<Device | undefined> {
-    return Array.from(this.devices.values()).find(
-      device => device.deviceFingerprint === fingerprint && device.userId === userId && device.isActive
-    );
-  }
-
-  async createDevice(insertDevice: InsertDevice, userId: string): Promise<Device> {
-    const id = randomUUID();
-    const device: Device = { 
-      ...insertDevice,
-      id,
-      userId,
-      userAgent: insertDevice.userAgent || null,
-      isActive: true,
-      lastSeenAt: new Date(),
-      createdAt: new Date()
-    };
-    this.devices.set(id, device);
-    return device;
-  }
-
-  async updateDeviceLastSeen(deviceId: string, userId: string): Promise<boolean> {
-    const device = this.devices.get(deviceId);
-    if (!device || device.userId !== userId) return false;
-    
-    const updated = { ...device, lastSeenAt: new Date() };
-    this.devices.set(deviceId, updated);
-    return true;
-  }
-
-  async deactivateDevice(deviceId: string, userId: string): Promise<boolean> {
-    const device = this.devices.get(deviceId);
-    if (!device || device.userId !== userId) return false;
-    
-    const updated = { ...device, isActive: false };
-    this.devices.set(deviceId, updated);
-    return true;
-  }
 }
 
 export class PostgreSQLStorage implements IStorage {
@@ -792,68 +731,6 @@ export class PostgreSQLStorage implements IStorage {
     return result[0];
   }
 
-  // Devices
-  async getDevices(userId: string): Promise<Device[]> {
-    return await this.db
-      .select()
-      .from(devices)
-      .where(eq(devices.userId, userId))
-      .orderBy(desc(devices.createdAt));
-  }
-
-  async getDevice(id: string, userId: string): Promise<Device | undefined> {
-    const result = await this.db
-      .select()
-      .from(devices)
-      .where(and(eq(devices.id, id), eq(devices.userId, userId)))
-      .limit(1);
-    return result[0];
-  }
-
-  async getDeviceByFingerprint(fingerprint: string, userId: string): Promise<Device | undefined> {
-    const result = await this.db
-      .select()
-      .from(devices)
-      .where(and(
-        eq(devices.deviceFingerprint, fingerprint), 
-        eq(devices.userId, userId),
-        eq(devices.isActive, true)
-      ))
-      .limit(1);
-    return result[0];
-  }
-
-  async createDevice(insertDevice: InsertDevice, userId: string): Promise<Device> {
-    const result = await this.db
-      .insert(devices)
-      .values({
-        ...insertDevice,
-        userId,
-      })
-      .returning();
-    
-    return result[0];
-  }
-
-  async updateDeviceLastSeen(deviceId: string, userId: string): Promise<boolean> {
-    const result = await this.db
-      .update(devices)
-      .set({ lastSeenAt: new Date() })
-      .where(and(eq(devices.id, deviceId), eq(devices.userId, userId)))
-      .returning();
-    
-    return result.length > 0;
-  }
-
-  async deactivateDevice(deviceId: string, userId: string): Promise<boolean> {
-    const result = await this.db
-      .update(devices)
-      .set({ isActive: false })
-      .where(and(eq(devices.id, deviceId), eq(devices.userId, userId)))
-      .returning();
-    
-    return result.length > 0;
-  }
 }
 
 // Switch to PostgreSQL storage
