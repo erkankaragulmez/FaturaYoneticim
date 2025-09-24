@@ -5,6 +5,9 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
+// Trust proxy for Replit environment
+app.set('trust proxy', 1);
+
 // CORS configuration for Replit preview mode
 app.use((req, res, next) => {
   // Allow all origins in development (Replit needs this for iframe)
@@ -36,10 +39,10 @@ app.use(session({
   saveUninitialized: false,
   rolling: true, // Reset expiration on activity
   cookie: {
-    secure: false,
-    httpOnly: false, // Allow access in iframe context
+    secure: true, // Required for SameSite=None
+    httpOnly: true, // Security: prevent XSS attacks
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Better for iframe compatibility
+    sameSite: 'none' // Allow third-party cookies for iframe
   }
 }));
 
