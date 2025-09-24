@@ -64,12 +64,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Store user in session and save explicitly
+      console.log("Before setting session - userId:", user.id);
+      console.log("Session before setting:", (req as any).session);
+      
       (req as any).session.userId = user.id;
+      
+      console.log("Session after setting:", (req as any).session);
+      
       (req as any).session.save((err: any) => {
         if (err) {
           console.error("Session save error:", err);
           return res.status(500).json({ error: "Oturum hatası" });
         }
+        
+        console.log("Session saved successfully, userId:", (req as any).session.userId);
         
         res.json({ 
           success: true, 
@@ -100,17 +108,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/user", async (req, res) => {
+    console.log("Auth check - Session:", (req as any).session);
+    console.log("Auth check - Session ID:", (req as any).session?.id);
+    console.log("Auth check - User ID:", (req as any).session?.userId);
+    
     const userId = (req as any).session?.userId;
     if (!userId) {
+      console.log("No userId found in session");
       return res.status(401).json({ error: "Giriş yapılmamış" });
     }
     
     try {
       const user = await storage.getUser(userId);
       if (!user) {
+        console.log("User not found in storage for ID:", userId);
         return res.status(401).json({ error: "Kullanıcı bulunamadı" });
       }
       
+      console.log("User found successfully:", user.username);
       res.json({
         id: user.id,
         firstName: user.firstName,
@@ -118,6 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: user.username
       });
     } catch (error) {
+      console.error("Error getting user:", error);
       res.status(500).json({ error: "Kullanıcı bilgileri alınamadı" });
     }
   });

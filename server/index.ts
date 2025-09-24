@@ -4,19 +4,36 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// CORS configuration for Replit preview mode
+app.use((req, res, next) => {
+  // Allow all origins in development (Replit needs this for iframe)
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin,X-Requested-With,Content-Type,Accept,Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fatura-yonetim-secret-key-2025',
-  resave: false,
-  saveUninitialized: false,
+  resave: true, // Required for some environments
+  saveUninitialized: true, // Required for some environments  
+  rolling: true, // Reset expiration on activity
   cookie: {
     secure: false, // Set to true in production with HTTPS
-    httpOnly: true,
+    httpOnly: false, // Allow access in iframe context
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax' // Allow cookies in iframe context (Replit preview)
+    sameSite: 'none' // Allow cross-origin cookies for iframe
   }
 }));
 
