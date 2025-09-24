@@ -23,17 +23,23 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Session configuration
+// Session configuration - use memory store for Replit compatibility
+import MemoryStore from 'memorystore';
+const MemoryStoreSession = MemoryStore(session);
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'fatura-yonetim-secret-key-2025',
-  resave: true, // Required for some environments
-  saveUninitialized: true, // Required for some environments  
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  resave: false,
+  saveUninitialized: false,
   rolling: true, // Reset expiration on activity
   cookie: {
-    secure: false, // Set to true in production with HTTPS
+    secure: false,
     httpOnly: false, // Allow access in iframe context
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'none' // Allow cross-origin cookies for iframe
+    sameSite: 'lax' // Better for iframe compatibility
   }
 }));
 
