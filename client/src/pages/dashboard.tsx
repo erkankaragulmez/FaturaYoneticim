@@ -118,7 +118,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-primary mb-1" data-testid="text-monthly-invoices">
               {formatCurrency(analytics?.monthly?.invoices || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">Girilen fatura tutarları</p>
+            <p className="text-xs text-muted-foreground">Bu ay girilen fatura tutarlari</p>
           </div>
         </Link>
 
