@@ -132,7 +132,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-green-600 mb-1" data-testid="text-monthly-payments">
               {formatCurrency(analytics?.monthly?.payments || 0)}
             </div>
-            <p className="text-xs text-green-600">Yapılan ödemeler toplamı</p>
+            <p className="text-xs text-green-600">Bu ay yapilan odemeler toplami</p>
           </div>
         </Link>
 
