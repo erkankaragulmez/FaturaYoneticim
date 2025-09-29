@@ -137,7 +137,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Alacaklar Card */}
-        <Link href="/reports?tab=aging">
+        <Link href="/customers">
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-orange-700 text-sm">Alacaklar</h3>
