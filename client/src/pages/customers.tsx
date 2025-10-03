@@ -115,16 +115,15 @@ export default function Customers() {
         </h2>
         <div className="flex gap-2">
           <Button 
-            variant="outline"
-            size="icon"
             onClick={() => {
               setShowHelpDialog(true);
               setHelpStep(0);
             }}
             data-testid="button-help"
-            className="border-primary text-primary hover:bg-primary/10"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
           >
-            <i className="fas fa-question-circle"></i>
+            <i className="fas fa-question-circle mr-1"></i>
+            Yardım
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
