@@ -86,7 +86,7 @@ export default function Customers() {
     },
     {
       title: "Adım 2: Müşteri Bilgilerini Girin",
-      content: "Açılan formda müşteri ismini ve isteğe bağlı olarak şirket adını girin. Ad ve soyad alanları zorunludur.",
+      content: "Açılan formda müşteri ismini ve isteğe bağlı olarak şirket adını girin. Müşteri ismi zorunludur.",
       icon: "fas fa-user-edit"
     },
     {
