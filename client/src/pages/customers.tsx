@@ -14,12 +14,14 @@ export default function Customers() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [hideZeroBalance, setHideZeroBalance] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [helpStep, setHelpStep] = useState(0);
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
   });
 
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [] } = useQuery<any[]>({
     queryKey: ["/api/invoices"],
   });
 
@@ -76,6 +78,34 @@ export default function Customers() {
     );
   }
 
+  const helpSteps = [
+    {
+      title: "Adım 1: Ekle Butonuna Tıklayın",
+      content: "Sağ üst köşedeki yeşil 'Ekle' butonuna tıklayarak yeni müşteri ekleme formunu açın.",
+      icon: "fas fa-plus-circle"
+    },
+    {
+      title: "Adım 2: Müşteri Bilgilerini Girin",
+      content: "Açılan formda müşterinin adını, soyadını ve isteğe bağlı olarak şirket adını girin. Ad ve soyad alanları zorunludur.",
+      icon: "fas fa-user-edit"
+    },
+    {
+      title: "Adım 3: İletişim Bilgileri",
+      content: "Müşterinin telefon numarasını, e-posta adresini ve adres bilgilerini ekleyin. Bu bilgiler opsiyoneldir ancak iletişim için önemlidir.",
+      icon: "fas fa-phone"
+    },
+    {
+      title: "Adım 4: Kaydet",
+      content: "Tüm bilgileri girdikten sonra 'Kaydet' butonuna tıklayın. Müşteri kaydınız oluşturulacak ve listeye eklenecektir.",
+      icon: "fas fa-save"
+    },
+    {
+      title: "Tamamlandı!",
+      content: "Müşteri başarıyla oluşturuldu. Artık bu müşteri için fatura kesebilir ve ödeme takibi yapabilirsiniz.",
+      icon: "fas fa-check-circle"
+    }
+  ];
+
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-6">
@@ -83,32 +113,105 @@ export default function Customers() {
           <i className="fas fa-users mr-2 text-primary"></i>
           Müşteriler
         </h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium"
-              data-testid="button-add-customer"
-            >
-              <i className="fas fa-plus mr-1"></i>
-              Ekle
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {selectedCustomer ? "Müşteriyi Düzenle" : "Yeni Müşteri"}
-              </DialogTitle>
-            </DialogHeader>
-            <CustomerForm
-              customer={selectedCustomer}
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                setSelectedCustomer(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setShowHelpDialog(true);
+              setHelpStep(0);
+            }}
+            data-testid="button-help"
+            className="border-primary text-primary hover:bg-primary/10"
+          >
+            <i className="fas fa-question-circle"></i>
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium"
+                data-testid="button-add-customer"
+              >
+                <i className="fas fa-plus mr-1"></i>
+                Ekle
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedCustomer ? "Müşteriyi Düzenle" : "Yeni Müşteri"}
+                </DialogTitle>
+              </DialogHeader>
+              <CustomerForm
+                customer={selectedCustomer}
+                onSuccess={() => {
+                  setIsDialogOpen(false);
+                  setSelectedCustomer(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Help Dialog */}
+      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <i className={`${helpSteps[helpStep].icon} text-primary`}></i>
+              {helpSteps[helpStep].title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground mb-6">{helpSteps[helpStep].content}</p>
+            
+            {/* Progress Dots */}
+            <div className="flex justify-center gap-2 mb-6">
+              {helpSteps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === helpStep ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setHelpStep(Math.max(0, helpStep - 1))}
+                disabled={helpStep === 0}
+                data-testid="button-help-previous"
+              >
+                <i className="fas fa-arrow-left mr-2"></i>
+                Önceki
+              </Button>
+              
+              {helpStep < helpSteps.length - 1 ? (
+                <Button
+                  onClick={() => setHelpStep(Math.min(helpSteps.length - 1, helpStep + 1))}
+                  data-testid="button-help-next"
+                >
+                  Sonraki
+                  <i className="fas fa-arrow-right ml-2"></i>
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowHelpDialog(false)}
+                  data-testid="button-help-close"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <i className="fas fa-check mr-2"></i>
+                  Anladım
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Search Bar */}
       <div className="relative mb-4">
@@ -129,7 +232,7 @@ export default function Customers() {
           <Checkbox 
             id="hide-zero-balance"
             checked={hideZeroBalance}
-            onCheckedChange={setHideZeroBalance}
+            onCheckedChange={(checked) => setHideZeroBalance(checked === true)}
             data-testid="checkbox-hide-zero-balance"
           />
           <label 
