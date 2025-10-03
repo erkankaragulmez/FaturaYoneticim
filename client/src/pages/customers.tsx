@@ -91,7 +91,7 @@ export default function Customers() {
     },
     {
       title: "Adım 3: İletişim Bilgileri",
-      content: "Müşterinin telefon numarasını, e-posta adresini ve adres bilgilerini ekleyin. Bu bilgiler opsiyoneldir ancak iletişim için önemlidir.",
+      content: "Müşterinin telefon numarasını, e-posta adresini ve adres bilgilerini ekleyin. Bu bilgiler isteğe bağlıdır ancak iletişim için önemlidir.",
       icon: "fas fa-phone"
     },
     {
