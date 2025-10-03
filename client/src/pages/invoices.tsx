@@ -22,7 +22,12 @@ export default function Invoices() {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
 
   // Handle URL parameters from dashboard
   useEffect(() => {

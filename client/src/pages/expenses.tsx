@@ -9,7 +9,12 @@ import { formatCurrency } from "@/lib/currency";
 import { queryClient } from "@/lib/queryClient";
 
 export default function Expenses() {
-  const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);

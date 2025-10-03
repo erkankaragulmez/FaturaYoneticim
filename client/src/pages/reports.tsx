@@ -12,7 +12,12 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState("aging");
   const [expenseFilter, setExpenseFilter] = useState("monthly");
   const [customerFilter, setCustomerFilter] = useState("monthly");
-  const [selectedPeriod, setSelectedPeriod] = useState("2025-09");
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
+  });
   const [viewingInvoice, setViewingInvoice] = useState<any>(null);
 
   // Handle URL parameters from dashboard
