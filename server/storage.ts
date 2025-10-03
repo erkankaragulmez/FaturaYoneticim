@@ -612,11 +612,17 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async updateInvoice(id: string, updateData: Partial<InsertInvoice>, userId: string): Promise<Invoice> {
-    const updateValues = {
+    const updateValues: any = {
       ...updateData,
-      issueDate: updateData.issueDate ? new Date(updateData.issueDate) : undefined,
-      dueDate: updateData.dueDate ? new Date(updateData.dueDate) : undefined,
     };
+    
+    // Only add date fields if they are provided in updateData
+    if (updateData.issueDate) {
+      updateValues.issueDate = new Date(updateData.issueDate);
+    }
+    if (updateData.dueDate) {
+      updateValues.dueDate = new Date(updateData.dueDate);
+    }
 
     const result = await this.db
       .update(invoices)
