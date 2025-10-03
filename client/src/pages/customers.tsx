@@ -101,7 +101,7 @@ export default function Customers() {
     },
     {
       title: "Tamamlandı!",
-      content: "Müşteri başarıyla oluşturuldu. Artık bu müşteri için fatura kesebilir ve ödeme takibi yapabilirsiniz.",
+      content: "Bu adımları takip ederek yeni müşteri oluşturabilirsiniz. Artık bu müşteri için fatura kesebilir ve ödeme takibi yapabilirsiniz.",
       icon: "fas fa-check-circle"
     }
   ];

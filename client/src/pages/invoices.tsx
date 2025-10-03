@@ -93,6 +93,7 @@ export default function Invoices() {
   };
 
   const filteredInvoices = invoices.filter(invoice => {
+    if (!invoice.issueDate) return false;
     const invoiceDate = new Date(invoice.issueDate);
     
     // Filter by date based on selected period
