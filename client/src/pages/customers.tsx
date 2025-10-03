@@ -81,7 +81,7 @@ export default function Customers() {
   const helpSteps = [
     {
       title: "Adım 1: Ekle Butonuna Tıklayın",
-      content: "Sağ üst köşedeki yeşil 'Ekle' butonuna tıklayarak yeni müşteri ekleme formunu açın.",
+      content: "Yeni müşteri oluşturmak için sağ üst köşedeki 'Ekle' butonuna tıklayarak yeni müşteri ekleme formunu açın.",
       icon: "fas fa-plus-circle"
     },
     {
