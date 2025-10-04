@@ -19,6 +19,8 @@ export default function Expenses() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [showHelpDialog, setShowHelpDialog] = useState(false);
+  const [helpStep, setHelpStep] = useState(0);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
@@ -100,6 +102,39 @@ export default function Expenses() {
     },
   });
 
+  const helpSteps = [
+    {
+      title: "Adım 1: Ekle Butonuna Tıklayın",
+      content: "Yeni masraf oluşturmak için sağ üst köşedeki 'Ekle' butonuna tıklayarak yeni masraf ekleme formunu açın.",
+      icon: "fas fa-plus-circle"
+    },
+    {
+      title: "Adım 2: Masraf Bilgilerini Girin",
+      content: "Açılan formda masraf açıklamasını girin. Açıklama alanı zorunludur.",
+      icon: "fas fa-edit"
+    },
+    {
+      title: "Adım 3: Kategori Seçin",
+      content: "Masraf kategorisini seçin (Yakıt, Yemek, Malzeme, İletişim, Ofis, Ulaşım, Diğer). Kategori seçimi zorunludur.",
+      icon: "fas fa-list"
+    },
+    {
+      title: "Adım 4: Tutar ve Tarih",
+      content: "Masraf tutarını ve tarihini girin. Bu alanlar zorunludur.",
+      icon: "fas fa-calendar-alt"
+    },
+    {
+      title: "Adım 5: Kaydet",
+      content: "Tüm bilgileri girdikten sonra 'Kaydet' butonuna tıklayın. Masraf kaydınız oluşturulacak ve seçilen kategoriye eklenecektir.",
+      icon: "fas fa-save"
+    },
+    {
+      title: "Tamamlandı!",
+      content: "Bu adımları takip ederek yeni masraf oluşturabilirsiniz. Masraflarınızı kategorilere göre takip edebilir ve raporlayabilirsiniz.",
+      icon: "fas fa-check-circle"
+    }
+  ];
+
   if (isLoading) {
     return (
       <div className="p-4">
@@ -123,32 +158,104 @@ export default function Expenses() {
           <i className="fas fa-credit-card mr-2 text-primary"></i>
           Masraflar
         </h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium"
-              data-testid="button-add-expense"
-            >
-              <i className="fas fa-plus mr-1"></i>
-              Ekle
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {selectedExpense ? "Masrafı Düzenle" : "Yeni Masraf"}
-              </DialogTitle>
-            </DialogHeader>
-            <ExpenseForm
-              expense={selectedExpense}
-              onSuccess={() => {
-                setIsDialogOpen(false);
-                setSelectedExpense(null);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => {
+              setShowHelpDialog(true);
+              setHelpStep(0);
+            }}
+            data-testid="button-help"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+          >
+            <i className="fas fa-question-circle mr-1"></i>
+            Yardım
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium"
+                data-testid="button-add-expense"
+              >
+                <i className="fas fa-plus mr-1"></i>
+                Ekle
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {selectedExpense ? "Masrafı Düzenle" : "Yeni Masraf"}
+                </DialogTitle>
+              </DialogHeader>
+              <ExpenseForm
+                expense={selectedExpense}
+                onSuccess={() => {
+                  setIsDialogOpen(false);
+                  setSelectedExpense(null);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {/* Help Dialog */}
+      <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <i className={`${helpSteps[helpStep].icon} text-primary`}></i>
+              {helpSteps[helpStep].title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-muted-foreground mb-6">{helpSteps[helpStep].content}</p>
+            
+            {/* Progress Dots */}
+            <div className="flex justify-center gap-2 mb-6">
+              {helpSteps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index === helpStep ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setHelpStep(Math.max(0, helpStep - 1))}
+                disabled={helpStep === 0}
+                data-testid="button-help-previous"
+              >
+                <i className="fas fa-arrow-left mr-2"></i>
+                Önceki
+              </Button>
+              
+              {helpStep < helpSteps.length - 1 ? (
+                <Button
+                  onClick={() => setHelpStep(Math.min(helpSteps.length - 1, helpStep + 1))}
+                  data-testid="button-help-next"
+                >
+                  Sonraki
+                  <i className="fas fa-arrow-right ml-2"></i>
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => setShowHelpDialog(false)}
+                  data-testid="button-help-close"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <i className="fas fa-check mr-2"></i>
+                  Anladım
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Month Filter */}
       <div className="mb-4">
