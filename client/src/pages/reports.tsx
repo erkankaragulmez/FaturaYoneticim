@@ -185,7 +185,7 @@ export default function Reports() {
     { id: "aging", label: "Geciken Alacaklar", icon: "fas fa-clock" },
     { id: "expenses", label: "Masraf Raporu", icon: "fas fa-chart-pie" },
     { id: "customers", label: "Top 5 Müşteri", icon: "fas fa-users" },
-    { id: "payments", label: "Ödeme Listesi", icon: "fas fa-money-bill-wave" }
+    { id: "payments", label: "Gelen Ödemeler", icon: "fas fa-money-bill-wave" }
   ];
 
   return (
@@ -197,7 +197,7 @@ export default function Reports() {
           Raporlar
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Ödeme, masraf, geciken alacaklar ve müşteri raporları
+          Gelen ödemeler, masraf, geciken alacaklar ve müşteri raporları
         </p>
       </div>
 
@@ -441,7 +441,7 @@ export default function Reports() {
                 <CardTitle className="flex items-center justify-between text-lg">
                   <div className="flex items-center">
                     <i className="fas fa-money-bill-wave mr-2 text-blue-600"></i>
-                    Ödeme Listesi
+                    Gelen Ödemeler
                   </div>
                   <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
                     <SelectTrigger className="w-40" data-testid="select-payment-period">
