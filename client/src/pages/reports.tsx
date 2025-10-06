@@ -147,9 +147,30 @@ export default function Reports() {
     return customerInvoices;
   };
 
+  // Payment List Report
+  const getPaymentList = () => {
+    return payments
+      .filter((payment: any) => {
+        if (!payment.date) return false;
+        const paymentDate = new Date(payment.date);
+        return paymentDate.getMonth() + 1 === currentMonth && paymentDate.getFullYear() === currentYear;
+      })
+      .map((payment: any) => {
+        const invoice = invoices.find((inv: any) => inv.id === payment.invoiceId);
+        const customer = invoice ? customers.find((c: any) => c.id === invoice.customerId) : null;
+        return {
+          ...payment,
+          invoice,
+          customer
+        };
+      })
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
   const agingData = getAgingReport();
   const expenseData = getExpenseReport();
   const topCustomersData = getTopCustomers();
+  const paymentListData = getPaymentList();
 
   // Helper function to get customer data
   const getCustomer = (customerId: string | null) => {
@@ -163,7 +184,8 @@ export default function Reports() {
   const tabs = [
     { id: "aging", label: "Geciken Alacaklar", icon: "fas fa-clock" },
     { id: "expenses", label: "Masraf Raporu", icon: "fas fa-chart-pie" },
-    { id: "customers", label: "Top 5 Müşteri", icon: "fas fa-users" }
+    { id: "customers", label: "Top 5 Müşteri", icon: "fas fa-users" },
+    { id: "payments", label: "Ödeme Listesi", icon: "fas fa-money-bill-wave" }
   ];
 
   return (
@@ -175,7 +197,7 @@ export default function Reports() {
           Raporlar
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Masraf, geciken alacaklar ve müşteri raporları
+          Ödeme, masraf, geciken alacaklar ve müşteri raporları
         </p>
       </div>
 
@@ -402,6 +424,89 @@ export default function Reports() {
                         <div className="text-right">
                           <p className="text-sm font-bold text-green-600">{formatCurrency(customer.totalInvoiced)}</p>
                           <p className="text-xs text-muted-foreground">Ödenen: {formatCurrency(customer.totalPaid)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "payments" && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <div className="flex items-center">
+                    <i className="fas fa-money-bill-wave mr-2 text-blue-600"></i>
+                    Ödeme Listesi
+                  </div>
+                  <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                    <SelectTrigger className="w-40" data-testid="select-payment-period">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2025-12">Aralık 2025</SelectItem>
+                      <SelectItem value="2025-11">Kasım 2025</SelectItem>
+                      <SelectItem value="2025-10">Ekim 2025</SelectItem>
+                      <SelectItem value="2025-09">Eylül 2025</SelectItem>
+                      <SelectItem value="2025-08">Ağustos 2025</SelectItem>
+                      <SelectItem value="2025-07">Temmuz 2025</SelectItem>
+                      <SelectItem value="2025-06">Haziran 2025</SelectItem>
+                      <SelectItem value="2025-05">Mayıs 2025</SelectItem>
+                      <SelectItem value="2025-04">Nisan 2025</SelectItem>
+                      <SelectItem value="2025-03">Mart 2025</SelectItem>
+                      <SelectItem value="2025-02">Şubat 2025</SelectItem>
+                      <SelectItem value="2025-01">Ocak 2025</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {paymentListData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <i className="fas fa-money-bill-wave text-4xl text-gray-400 mb-4"></i>
+                    <p className="text-muted-foreground">Bu dönem için ödeme kaydı bulunamadı</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-semibold text-blue-800">
+                        Toplam Ödeme: {formatCurrency(paymentListData.reduce((sum: number, p: any) => sum + parseFloat(p.amount), 0))}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        {paymentListData.length} ödeme kaydı
+                      </p>
+                    </div>
+                    {paymentListData.map((payment: any) => (
+                      <div 
+                        key={payment.id} 
+                        className="flex justify-between items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+                        data-testid={`payment-item-${payment.id}`}
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {payment.customer?.name || "Bilinmeyen Müşteri"}
+                          </p>
+                          {payment.customer?.company && (
+                            <p className="text-xs text-muted-foreground">{payment.customer.company}</p>
+                          )}
+                          {payment.invoice && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Fatura: {payment.invoice.invoiceNumber}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(payment.date).toLocaleDateString('tr-TR')}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-blue-600">{formatCurrency(payment.amount)}</p>
+                          {payment.method && (
+                            <p className="text-xs text-muted-foreground capitalize">{payment.method}</p>
+                          )}
                         </div>
                       </div>
                     ))}
