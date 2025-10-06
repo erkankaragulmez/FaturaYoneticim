@@ -128,7 +128,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Gelen Ödemeler Card */}
-        <Link href={`/invoices?period=${selectedPeriod}&status=paid-partial`}>
+        <Link href="/reports?tab=payments">
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-green-700 text-sm">Gelen Ödemeler ({currentMonth}/2025)</h3>
