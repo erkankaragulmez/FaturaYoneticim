@@ -9,9 +9,8 @@ import InvoiceDetailModal from "@/components/modals/invoice-detail-modal";
 
 export default function Reports() {
   const [location] = useLocation();
-  const [activeTab, setActiveTab] = useState("aging");
+  const [activeTab, setActiveTab] = useState("payments");
   const [expenseFilter, setExpenseFilter] = useState("monthly");
-  const [customerFilter, setCustomerFilter] = useState("monthly");
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -115,38 +114,6 @@ export default function Reports() {
     return Object.values(categoryData);
   };
 
-  // Top 5 Customers Report
-  const getTopCustomers = () => {
-    const customerInvoices = customers.map((customer: any) => {
-      const customerInvs = invoices.filter((inv: any) => {
-        const date = new Date(inv.issueDate);
-        const matchesCustomer = inv.customerId === customer.id;
-        
-        if (customerFilter === "monthly") {
-          return matchesCustomer && date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
-        } else {
-          return matchesCustomer && date.getFullYear() === currentYear;
-        }
-      });
-
-      const totalAmount = customerInvs.reduce((sum: number, inv: any) => sum + parseFloat(inv.amount), 0);
-      const totalPayments = payments.filter((payment: any) => {
-        return customerInvs.some((inv: any) => inv.id === payment.invoiceId);
-      }).reduce((sum: number, payment: any) => sum + parseFloat(payment.amount), 0);
-
-      return {
-        ...customer,
-        totalInvoiced: totalAmount,
-        totalPaid: totalPayments,
-        invoiceCount: customerInvs.length
-      };
-    }).filter((customer: any) => customer.totalInvoiced > 0)
-      .sort((a: any, b: any) => b.totalInvoiced - a.totalInvoiced)
-      .slice(0, 5);
-
-    return customerInvoices;
-  };
-
   // Payment List Report
   const getPaymentList = () => {
     return payments
@@ -169,7 +136,6 @@ export default function Reports() {
 
   const agingData = getAgingReport();
   const expenseData = getExpenseReport();
-  const topCustomersData = getTopCustomers();
   const paymentListData = getPaymentList();
 
   // Helper function to get customer data
@@ -182,10 +148,9 @@ export default function Reports() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
   const tabs = [
+    { id: "payments", label: "Gelen Ödemeler", icon: "fas fa-money-bill-wave" },
     { id: "aging", label: "Geciken Alacaklar", icon: "fas fa-clock" },
-    { id: "expenses", label: "Masraf Raporu", icon: "fas fa-chart-pie" },
-    { id: "customers", label: "Top 5 Müşteri", icon: "fas fa-users" },
-    { id: "payments", label: "Gelen Ödemeler", icon: "fas fa-money-bill-wave" }
+    { id: "expenses", label: "Masraf Raporu", icon: "fas fa-chart-pie" }
   ];
 
   return (
@@ -197,7 +162,7 @@ export default function Reports() {
           Raporlar
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Gelen ödemeler, masraf, geciken alacaklar ve müşteri raporları
+          Gelen ödemeler, masraf ve geciken alacaklar raporları
         </p>
       </div>
 
@@ -372,61 +337,6 @@ export default function Reports() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "customers" && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between text-lg">
-                  <div className="flex items-center">
-                    <i className="fas fa-users mr-2 text-green-600"></i>
-                    Top 5 Müşteri
-                  </div>
-                  <Select value={customerFilter} onValueChange={setCustomerFilter}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="monthly">Aylık</SelectItem>
-                      <SelectItem value="yearly">Yıllık</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {topCustomersData.length === 0 ? (
-                  <div className="text-center py-8">
-                    <i className="fas fa-users text-4xl text-gray-400 mb-4"></i>
-                    <p className="text-muted-foreground">Bu dönem için müşteri verisi bulunamadı</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {topCustomersData.map((customer: any, index: number) => (
-                      <div key={customer.id} className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{customer.name}</p>
-                            {customer.company && (
-                              <p className="text-xs text-muted-foreground">{customer.company}</p>
-                            )}
-                            <p className="text-xs text-muted-foreground">{customer.invoiceCount} fatura</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-green-600">{formatCurrency(customer.totalInvoiced)}</p>
-                          <p className="text-xs text-muted-foreground">Ödenen: {formatCurrency(customer.totalPaid)}</p>
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 )}
               </CardContent>
