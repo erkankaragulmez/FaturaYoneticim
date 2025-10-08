@@ -405,18 +405,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Monthly calculations
       const monthlyInvoices = invoices.filter(inv => {
-        const date = new Date(inv.issueDate!);
-        return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
+        if (!inv.issueDate) return false;
+        const dateStr = inv.issueDate.toString();
+        const date = new Date(dateStr);
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth() + 1;
+        return month === currentMonth && year === currentYear;
       });
       
       const monthlyExpenses = expenses.filter(exp => {
-        const date = new Date(exp.date!);
-        return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
+        if (!exp.date) return false;
+        const dateStr = exp.date.toString();
+        const date = new Date(dateStr);
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth() + 1;
+        return month === currentMonth && year === currentYear;
       });
       
       const monthlyPayments = payments.filter(pay => {
-        const date = new Date(pay.date!);
-        return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
+        if (!pay.date) return false;
+        const dateStr = pay.date.toString();
+        const date = new Date(dateStr);
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth() + 1;
+        return month === currentMonth && year === currentYear;
       });
       
       // Calculations
@@ -433,13 +445,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Yearly calculations
       const yearlyInvoices = invoices.filter(inv => {
-        const date = new Date(inv.issueDate!);
-        return date.getFullYear() === currentYear;
+        if (!inv.issueDate) return false;
+        const dateStr = inv.issueDate.toString();
+        const date = new Date(dateStr);
+        return date.getUTCFullYear() === currentYear;
       });
       
       const yearlyExpenses = expenses.filter(exp => {
-        const date = new Date(exp.date!);
-        return date.getFullYear() === currentYear;
+        if (!exp.date) return false;
+        const dateStr = exp.date.toString();
+        const date = new Date(dateStr);
+        return date.getUTCFullYear() === currentYear;
       });
       
       const yearlyInvoiceTotal = yearlyInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
