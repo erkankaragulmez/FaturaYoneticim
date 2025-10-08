@@ -4,6 +4,17 @@ import { storage } from "./storage";
 import { insertCustomerSchema, insertInvoiceSchema, insertExpenseSchema, insertPaymentSchema, insertUserSchema, signInSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Utility function to extract year and month from date values (timezone-safe)
+function getYearMonth(dateValue: Date | string | null | undefined): { year: number; month: number } | null {
+  if (!dateValue) return null;
+  const dateStr = dateValue.toString();
+  const date = new Date(dateStr);
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1
+  };
+}
+
 // Authentication middleware to extract userId from session
 function requireAuth(req: any, res: any, next: any) {
   const userId = req.session?.userId;
@@ -405,30 +416,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Monthly calculations
       const monthlyInvoices = invoices.filter(inv => {
-        if (!inv.issueDate) return false;
-        const dateStr = inv.issueDate.toString();
-        const date = new Date(dateStr);
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1;
-        return month === currentMonth && year === currentYear;
+        const ym = getYearMonth(inv.issueDate);
+        return ym && ym.month === currentMonth && ym.year === currentYear;
       });
       
       const monthlyExpenses = expenses.filter(exp => {
-        if (!exp.date) return false;
-        const dateStr = exp.date.toString();
-        const date = new Date(dateStr);
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1;
-        return month === currentMonth && year === currentYear;
+        const ym = getYearMonth(exp.date);
+        return ym && ym.month === currentMonth && ym.year === currentYear;
       });
       
       const monthlyPayments = payments.filter(pay => {
-        if (!pay.date) return false;
-        const dateStr = pay.date.toString();
-        const date = new Date(dateStr);
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1;
-        return month === currentMonth && year === currentYear;
+        const ym = getYearMonth(pay.date);
+        return ym && ym.month === currentMonth && ym.year === currentYear;
       });
       
       // Calculations
@@ -445,17 +444,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Yearly calculations
       const yearlyInvoices = invoices.filter(inv => {
-        if (!inv.issueDate) return false;
-        const dateStr = inv.issueDate.toString();
-        const date = new Date(dateStr);
-        return date.getUTCFullYear() === currentYear;
+        const ym = getYearMonth(inv.issueDate);
+        return ym && ym.year === currentYear;
       });
       
       const yearlyExpenses = expenses.filter(exp => {
-        if (!exp.date) return false;
-        const dateStr = exp.date.toString();
-        const date = new Date(dateStr);
-        return date.getUTCFullYear() === currentYear;
+        const ym = getYearMonth(exp.date);
+        return ym && ym.year === currentYear;
       });
       
       const yearlyInvoiceTotal = yearlyInvoices.reduce((sum, inv) => sum + parseFloat(inv.amount), 0);
@@ -489,8 +484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const expenses = await storage.getExpenses(req.userId);
       const filteredExpenses = expenses.filter(exp => {
-        const date = new Date(exp.date!);
-        return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear;
+        const ym = getYearMonth(exp.date);
+        return ym && ym.month === currentMonth && ym.year === currentYear;
       });
       
       const categoryTotals = filteredExpenses.reduce((acc, expense) => {
