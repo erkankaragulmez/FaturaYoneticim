@@ -95,9 +95,6 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
           data-testid="input-invoice-number"
           disabled={!invoice}
         />
-        {!invoice && (
-          <p className="text-sm text-gray-500">Fatura numarası otomatik olarak oluşturulacak</p>
-        )}
         {form.formState.errors.number && (
           <p className="text-sm text-red-600">{form.formState.errors.number.message}</p>
         )}
