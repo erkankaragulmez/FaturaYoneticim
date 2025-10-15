@@ -52,7 +52,7 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  phone: text("phone").notNull(),
+  phone: text("phone"),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -112,7 +112,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
 }).extend({
   firstName: z.string().min(1, "İsim gereklidir"),
   lastName: z.string().min(1, "Soyisim gereklidir"),
-  phone: z.string().min(10, "Geçerli telefon numarası giriniz"),
+  phone: z.string().optional(),
   password: z.string().min(6, "Şifre en az 6 karakter olmalıdır"),
 });
 

@@ -232,7 +232,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Telefon Numarası</FormLabel>
+                        <FormLabel>Telefon Numarası (Opsiyonel)</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="05xxxxxxxxx"
