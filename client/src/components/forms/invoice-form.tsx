@@ -87,20 +87,6 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="number">Fatura No</Label>
-        <Input
-          id="number"
-          {...form.register("number")}
-          placeholder="Otomatik olarak oluşturulacak (FT-2025-001)"
-          data-testid="input-invoice-number"
-          disabled={!invoice}
-        />
-        {form.formState.errors.number && (
-          <p className="text-sm text-red-600">{form.formState.errors.number.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="customerId">Müşteri *</Label>
         {customers.length === 0 ? (
           <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
