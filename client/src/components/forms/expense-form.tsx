@@ -96,20 +96,6 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description" className="text-sm font-medium text-foreground">
-          Masraf Açıklaması
-        </Label>
-        <Textarea
-          id="description"
-          {...form.register("description")}
-          placeholder="Masraf açıklaması girin (isteğe bağlı)"
-          rows={3}
-          className="text-base bg-gray-50 border-gray-200 placeholder:text-gray-400 resize-none"
-          data-testid="input-expense-description"
-        />
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="amount" className="text-sm font-medium text-foreground">
           Tutar <span className="text-red-500">*</span>
         </Label>
@@ -140,6 +126,20 @@ export default function ExpenseForm({ expense, onSuccess }: ExpenseFormProps) {
             data-testid="input-expense-date"
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm font-medium text-foreground">
+          Masraf Açıklaması
+        </Label>
+        <Textarea
+          id="description"
+          {...form.register("description")}
+          placeholder="Masraf açıklaması girin (isteğe bağlı)"
+          rows={3}
+          className="text-base bg-gray-50 border-gray-200 placeholder:text-gray-400 resize-none"
+          data-testid="input-expense-description"
+        />
       </div>
 
       <div className="pt-4">
