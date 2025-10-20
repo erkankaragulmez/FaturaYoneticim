@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Customer } from "@shared/schema";
 import CustomerForm from "@/components/forms/customer-form";
 import { formatCurrency } from "@/lib/currency";
@@ -16,6 +17,7 @@ export default function Customers() {
   const [hideZeroBalance, setHideZeroBalance] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [helpStep, setHelpStep] = useState(0);
+  const [deletingCustomerId, setDeletingCustomerId] = useState<string | null>(null);
 
   const { data: customers = [], isLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -307,7 +309,7 @@ export default function Customers() {
                         variant="ghost"
                         size="sm"
                         className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
-                        onClick={() => deleteMutation.mutate(customer.id)}
+                        onClick={() => setDeletingCustomerId(customer.id)}
                         disabled={deleteMutation.isPending}
                         data-testid={`button-delete-customer-${customer.id}`}
                       >
@@ -321,6 +323,32 @@ export default function Customers() {
           })
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingCustomerId} onOpenChange={(open) => !open && setDeletingCustomerId(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu müşteriyi silmek istediğinizden emin misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingCustomerId) {
+                  deleteMutation.mutate(deletingCustomerId);
+                  setDeletingCustomerId(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
