@@ -7,7 +7,7 @@ interface SideMenuProps {
 
 export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
   const menuItems = [
-    { path: "/", icon: "fas fa-th-large", label: "Panel" },
+    { path: "/", icon: "fas fa-th-large", label: "Özet" },
     { path: "/customers", icon: "fas fa-users", label: "Müşteriler" },
     { path: "/invoices", icon: "fas fa-file-invoice", label: "Faturalar" },
     { path: "/expenses", icon: "fas fa-credit-card", label: "Masraflar" },

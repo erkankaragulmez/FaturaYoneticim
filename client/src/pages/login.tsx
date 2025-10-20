@@ -109,7 +109,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-blue-600">FaturaYoneticim</CardTitle>
+          <CardTitle className="text-2xl font-bold text-blue-600">Gelir Gider Takibim</CardTitle>
           <CardDescription>
             Fatura ve müşteri yönetim sistemi
           </CardDescription>

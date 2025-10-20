@@ -17,12 +17,12 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
 
   const getPageTitle = () => {
     switch (location) {
-      case "/": return "Panel";
+      case "/": return "Özet";
       case "/customers": return "Müşteriler";
       case "/invoices": return "Faturalar";
       case "/expenses": return "Masraflar";
       case "/reports": return "Raporlar";
-      default: return "FaturaYoneticim";
+      default: return "Gelir Gider Takibim";
     }
   };
 
@@ -39,7 +39,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
         </button>
         <div className="flex items-center space-x-2">
           <i className="fas fa-receipt text-lg"></i>
-          <h1 className="text-lg font-semibold">FaturaYoneticim</h1>
+          <h1 className="text-lg font-semibold">Gelir Gider Takibim</h1>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
