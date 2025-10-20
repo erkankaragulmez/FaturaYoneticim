@@ -45,7 +45,7 @@ export default function MobileLayout({ children }: MobileLayoutProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="text-primary-foreground hover:text-primary-foreground/80 bg-white/10 rounded-full px-3 py-2" data-testid="button-profile">
               <i className="fas fa-user-circle text-2xl mr-2"></i>
-              <span className="text-sm font-medium">{user?.firstName}</span>
+              <span className="text-sm font-medium">{user?.firstName} {user?.lastName}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
