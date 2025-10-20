@@ -1,15 +1,19 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import { insertInvoiceSchema, type Invoice, type InsertInvoice, type Customer } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InvoiceFormProps {
   invoice?: Invoice | null;
@@ -19,9 +23,19 @@ interface InvoiceFormProps {
 
 export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFormProps) {
   const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    invoice ? customers.find(c => c.id === invoice.customerId) || null : null
+  );
   
+  // Custom schema for form validation - customerId is optional because we support creating new customers
+  const formSchema = insertInvoiceSchema.extend({
+    customerId: insertInvoiceSchema.shape.customerId.optional().or(z.literal("")),
+  });
+
   const form = useForm<InsertInvoice>({
-    resolver: zodResolver(insertInvoiceSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       number: invoice?.number || "",
       customerId: invoice?.customerId || "",
@@ -43,8 +57,24 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
     }
   }, [issueDate, form, invoice]);
 
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(customer => 
+    customer.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+    (customer.company && customer.company.toLowerCase().includes(searchValue.toLowerCase()))
+  );
+
+  // Handle search input change
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value);
+    // Clear selected customer if search doesn't match selected customer name
+    if (selectedCustomer && !selectedCustomer.name.toLowerCase().includes(value.toLowerCase())) {
+      setSelectedCustomer(null);
+      form.setValue("customerId", "");
+    }
+  };
+
   const mutation = useMutation({
-    mutationFn: async (data: InsertInvoice) => {
+    mutationFn: async (data: InsertInvoice & { newCustomerName?: string }) => {
       if (invoice) {
         return apiRequest("PUT", `/api/invoices/${invoice.id}`, data);
       } else {
@@ -53,6 +83,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       toast({
         title: "Başarılı",
@@ -81,35 +112,129 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
   });
 
   const onSubmit = (data: InsertInvoice) => {
-    mutation.mutate(data);
+    // If no customer selected but search value exists, create new customer
+    if (!selectedCustomer && searchValue.trim()) {
+      mutation.mutate({ ...data, customerId: "", newCustomerName: searchValue.trim() });
+    } else if (selectedCustomer) {
+      mutation.mutate({ ...data, customerId: selectedCustomer.id });
+    } else {
+      toast({
+        title: "Hata",
+        description: "Lütfen bir müşteri seçin veya yeni müşteri adı girin",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCreateNewCustomer = () => {
+    if (searchValue.trim()) {
+      setSelectedCustomer(null);
+      form.setValue("customerId", "");
+      setOpen(false);
+    }
+  };
+
+  const handleSelectCustomer = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setSearchValue(customer.name);
+    form.setValue("customerId", customer.id);
+    setOpen(false);
   };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="customerId">Müşteri *</Label>
-        {customers.length === 0 ? (
-          <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center">
-            <p className="text-sm text-gray-600 mb-2">Henüz müşteri eklememişsiniz</p>
-            <p className="text-xs text-gray-500">Fatura oluşturmak için önce bir müşteri eklemeniz gerekiyor</p>
-          </div>
-        ) : (
-          <Select
-            value={form.watch("customerId") || ""}
-            onValueChange={(value) => form.setValue("customerId", value)}
-          >
-            <SelectTrigger data-testid="select-invoice-customer">
-              <SelectValue placeholder="Müşteri seçin" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
-                  {customer.name} {customer.company && `- ${customer.company}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        <Label htmlFor="customer">Müşteri *</Label>
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-full justify-between"
+              data-testid="select-invoice-customer"
+            >
+              {selectedCustomer ? (
+                <span>
+                  {selectedCustomer.name} 
+                  {selectedCustomer.company && ` - ${selectedCustomer.company}`}
+                </span>
+              ) : searchValue ? (
+                <span className="text-muted-foreground">
+                  Yeni müşteri: {searchValue}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">Müşteri seçin veya yeni ekleyin</span>
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0" align="start">
+            <Command>
+              <CommandInput 
+                placeholder="Müşteri ara veya yeni ekle..." 
+                value={searchValue}
+                onValueChange={handleSearchChange}
+              />
+              <CommandList>
+                {searchValue.trim() && filteredCustomers.length === 0 && (
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={handleCreateNewCustomer}
+                      className="bg-accent/50"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      <span>Yeni müşteri oluştur: <strong>{searchValue}</strong></span>
+                    </CommandItem>
+                  </CommandGroup>
+                )}
+                {filteredCustomers.length === 0 && !searchValue && (
+                  <CommandEmpty>Müşteri bulunamadı. Yeni müşteri eklemek için isim yazın.</CommandEmpty>
+                )}
+                {filteredCustomers.length > 0 && (
+                  <>
+                    {searchValue.trim() && !filteredCustomers.some(c => c.name.toLowerCase() === searchValue.toLowerCase()) && (
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={handleCreateNewCustomer}
+                          className="bg-accent/50"
+                        >
+                          <Plus className="mr-2 h-4 w-4" />
+                          <span>Yeni müşteri oluştur: <strong>{searchValue}</strong></span>
+                        </CommandItem>
+                      </CommandGroup>
+                    )}
+                    <CommandGroup heading="Mevcut Müşteriler">
+                      {filteredCustomers.map((customer) => (
+                        <CommandItem
+                          key={customer.id}
+                          value={customer.name}
+                          onSelect={() => handleSelectCustomer(customer)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedCustomer?.id === customer.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          <div>
+                            <div>{customer.name}</div>
+                            {customer.company && (
+                              <div className="text-xs text-muted-foreground">{customer.company}</div>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </>
+                )}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <p className="text-xs text-muted-foreground">
+          Mevcut müşteri seçin veya yeni müşteri adı yazın
+        </p>
         {form.formState.errors.customerId && (
           <p className="text-sm text-red-600">{form.formState.errors.customerId.message}</p>
         )}
@@ -164,7 +289,7 @@ export default function InvoiceForm({ invoice, customers, onSuccess }: InvoiceFo
       <div className="flex space-x-2 pt-4">
         <Button
           type="submit"
-          disabled={mutation.isPending || customers.length === 0}
+          disabled={mutation.isPending || (!selectedCustomer && !searchValue.trim())}
           className="flex-1"
           data-testid="button-save-invoice"
         >
