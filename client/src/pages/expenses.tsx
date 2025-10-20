@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Expense } from "@shared/schema";
 import ExpenseForm from "@/components/forms/expense-form";
 import { formatCurrency } from "@/lib/currency";
@@ -21,6 +22,7 @@ export default function Expenses() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [helpStep, setHelpStep] = useState(0);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
 
   const currentMonth = parseInt(selectedPeriod.split("-")[1]);
   const currentYear = parseInt(selectedPeriod.split("-")[0]);
@@ -379,7 +381,7 @@ export default function Expenses() {
                           className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-lg font-bold"
                           onClick={(e) => {
                             e.stopPropagation();
-                            deleteMutation.mutate(expense.id);
+                            setDeletingExpenseId(expense.id);
                           }}
                           disabled={deleteMutation.isPending}
                           data-testid={`button-delete-expense-${expense.id}`}
@@ -399,6 +401,32 @@ export default function Expenses() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingExpenseId} onOpenChange={(open) => !open && setDeletingExpenseId(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu masrafı silmek istediğinizden emin misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingExpenseId) {
+                  deleteMutation.mutate(deletingExpenseId);
+                  setDeletingExpenseId(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
