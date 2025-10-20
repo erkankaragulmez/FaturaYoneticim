@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ export default function Invoices() {
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -274,7 +276,7 @@ export default function Invoices() {
                     variant="ghost"
                     size="sm"
                     className="p-2 min-w-8 h-8 text-gray-600 hover:text-red-600 text-sm font-bold"
-                    onClick={() => deleteMutation.mutate(invoice.id)}
+                    onClick={() => setDeletingInvoiceId(invoice.id)}
                     disabled={deleteMutation.isPending}
                     data-testid={`button-delete-invoice-${invoice.id}`}
                   >
@@ -333,6 +335,32 @@ export default function Invoices() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingInvoiceId} onOpenChange={(open) => !open && setDeletingInvoiceId(null)}>
+        <AlertDialogContent className="max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Emin misiniz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bu faturayı silmek istediğinizden emin misiniz?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>İptal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletingInvoiceId) {
+                  deleteMutation.mutate(deletingInvoiceId);
+                  setDeletingInvoiceId(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Sil
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
