@@ -68,7 +68,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/auth/signin", async (req, res) => {
     try {
       const validatedData = signInSchema.parse(req.body);
-      const user = await storage.signInUser(validatedData.username, validatedData.password);
+      // Convert username to lowercase for case-insensitive login
+      const username = validatedData.username.toLowerCase();
+      const user = await storage.signInUser(username, validatedData.password);
       
       if (!user) {
         return res.status(401).json({ error: "Kullanıcı adı veya şifre hatalı" });

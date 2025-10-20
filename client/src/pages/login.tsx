@@ -147,7 +147,8 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                           <Input 
                             placeholder="örn: ahmetdem"
                             data-testid="input-username"
-                            {...field} 
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value.toLowerCase())}
                           />
                         </FormControl>
                         <FormMessage />
