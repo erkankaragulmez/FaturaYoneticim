@@ -84,14 +84,15 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     
-    // Generate username: firstName + first 3 letters of lastName (lowercase, no spaces)
-    const username = (insertUser.firstName + insertUser.lastName.substring(0, 3)).toLowerCase().replace(/\s+/g, '');
+    // Generate username: firstName + lastName (lowercase, no spaces)
+    const username = (insertUser.firstName + insertUser.lastName).toLowerCase().replace(/\s+/g, '');
     
     // Hash the password
     const hashedPassword = hashPassword(insertUser.password);
     
     const user: User = { 
-      ...insertUser, 
+      ...insertUser,
+      phone: insertUser.phone || null,
       id,
       username,
       password: hashedPassword,
@@ -379,8 +380,8 @@ export class PostgreSQLStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    // Generate username: firstName + first 3 letters of lastName (lowercase, no spaces)
-    const username = (insertUser.firstName + insertUser.lastName.substring(0, 3))
+    // Generate username: firstName + lastName (lowercase, no spaces)
+    const username = (insertUser.firstName + insertUser.lastName)
       .toLowerCase()
       .replace(/\s+/g, '');
     
