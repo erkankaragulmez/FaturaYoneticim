@@ -111,7 +111,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-blue-600">Gelir Gider Takibim</CardTitle>
           <CardDescription>
-            Fatura ve müşteri yönetim sistemi
+            Gelir gider ve müşteri yönetimi
           </CardDescription>
         </CardHeader>
 
@@ -229,24 +229,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
                   <FormField
                     control={signUpForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Telefon Numarası (Opsiyonel)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="05xxxxxxxxx"
-                            data-testid="input-phone"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={signUpForm.control}
                     name="password"
                     render={({ field }) => (
                       <FormItem>
@@ -264,9 +246,23 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                     )}
                   />
 
-                  <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded-lg">
-                    <strong>Bilgi:</strong> Kullanıcı adınız otomatik oluşturulacak (İsim + Soyisimin ilk 3 harfi).
-                  </div>
+                  <FormField
+                    control={signUpForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefon Numarası (İsteğe bağlı)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="05xxxxxxxxx"
+                            data-testid="input-phone"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <Button 
                     type="submit" 
